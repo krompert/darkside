@@ -17,7 +17,7 @@ class AutoMod(commands.Cog):
             "blacklisted_words": [],
             "links": False,
             "invites": False,
-            "dublicates": False,
+            "duplicates": False,
             "fastmessage": False,
             "images": False,
             "spoliers": False,
@@ -34,7 +34,7 @@ class AutoMod(commands.Cog):
         self.data.register_member(**default_member)
         self.data.register_guild(**default_guild)
         self.spam = {}
-        self.dublicates = {}
+        self.duplicates = {}
         self.images_spam = {}
         self.amount_of_messages = 5
         self.amount_of_time = 5
@@ -60,11 +60,13 @@ class AutoMod(commands.Cog):
         roles = await self.data.guild(ctx.guild).whitelisted_roles()
         if role.id not in roles:
             roles.append(role.id)
-
             await self.data.guild(ctx.guild).whitelisted_roles.set(roles)
             return await ctx.send(f"{role.name} has been whitelisted.")
+        elif role.id in roles:
+            roles.remove(role.id)
+            await self.data.guild(ctx.guild).whitelisted_roles.set(roles)
+            return await ctx.send(f"{role.name} has been removed from the whitelist.")
 
-        await ctx.send("This role is already whitelisted.")
 
     @automod_.command(name="whitelistuser")
     async def _whitelistuser(self, ctx, *, member: discord.Member):
@@ -75,8 +77,10 @@ class AutoMod(commands.Cog):
 
             await self.data.guild(ctx.guild).whitelisted_members.set(members)
             return await ctx.send(f"{member.name} has been whitelisted.")
-
-        await ctx.send(f"{member.name} is already whitelisted.")
+        elif member.id in members:
+            members.remove(member.id)
+            await self.data.guild(ctx.guild).whitelisted_members.set(members)
+            return await ctx.send(f"{member.name} has been removed from the whitelist.")
 
     @automod_.command(name="word")
     async def _words(self, ctx, *, word: str):
@@ -92,7 +96,7 @@ class AutoMod(commands.Cog):
 
     @automod_.command(name="removeword")
     async def _removeword(self, ctx, *, word: str):
-        """Blacklist a word."""
+        """Remove a blacklisted word."""
         blacklisted_words = await self.data.guild(ctx.guild).blacklisted_words()
         if word.lower() in blacklisted_words:
             blacklisted_words.remove(word.lower())
@@ -107,7 +111,7 @@ class AutoMod(commands.Cog):
         """List of blacklisted words."""
         blacklisted_words = await self.data.guild(ctx.guild).blacklisted_words()
         if not blacklisted_words:
-            await ctx.send("There are no blacklisted words on this server!")
+            return await ctx.send("There are no blacklisted words on this server!")
 
         await ctx.send(f"Below are all the blacklisted words.\n\n {', '.join(blacklisted_words)}")
 
@@ -163,16 +167,16 @@ class AutoMod(commands.Cog):
             await self.data.guild(ctx.guild).invites.set(True)
             await ctx.send("Users will not be allowed to send links.")
 
-    @automod_.command(name="dublicates")
-    async def _dublicates(self, ctx):
-        """Disable mass dublicates."""
-        dublicates = await self.data.guild(ctx.guild).dublicates()
+    @automod_.command(name="duplicates")
+    async def _duplicates(self, ctx):
+        """Disable mass duplicates."""
+        duplicates = await self.data.guild(ctx.guild).duplicates()
 
-        if dublicates == True:
-            await self.data.guild(ctx.guild).dublicates.set(False)
+        if duplicates == True:
+            await self.data.guild(ctx.guild).duplicates.set(False)
             await ctx.send("Users are allowed to send dublicate texts.")
-        elif dublicates == False:
-            await self.data.guild(ctx.guild).dublicates.set(True)
+        elif duplicates == False:
+            await self.data.guild(ctx.guild).duplicates.set(True)
             await ctx.send("Users will not be allowed to send dublicate texts.")
 
     @automod_.command(name="fastmessage")
@@ -200,14 +204,26 @@ class AutoMod(commands.Cog):
             await ctx.send("Users will not be allowed to send messages marked as spoliers.")
 
     @automod_.command(name="mutetime")
-    async def _mutetime(self, ctx, *, time: int):
+    async def _mutetime(self, ctx, *, time: str):
         """Define the time of the mute."""
-        await self.data.guild(ctx.guild).mutetime.set(time)
-        await ctx.send(f"Mute time has been set to {time} minutes.")
+        try:
+            if isinstance(int(time), int):
+                time = int(time)
+            else:
+                time = None
+        except:
+            time = None
+            pass
+
+        if time:
+            await self.data.guild(ctx.guild).mutetime.set(time)
+            await ctx.send(f"Mute time has been set to {time} minutes.")
+        else:
+            return await ctx.send("Invalid time provided, make sure it is just numbers.")
 
     @automod_.command(name="violations")
     async def _violations(self, ctx, *, violations: int):
-        """Define the time of the mute."""
+        """Define the total violations before user gets warned."""
         await self.data.guild(ctx.guild).maxviolations.set(violations)
         await ctx.send(f"Max violations have been set to {violations} times.")
 
@@ -242,11 +258,11 @@ class AutoMod(commands.Cog):
                 await self.trigger_punish(message, reason)
                 return await self.manage_message(message)
 
-        if await self.data.guild(guild).dublicates():
+        if await self.data.guild(guild).duplicates():
             check = await self.dublicate_text_check(message)
             print(f"Check {check}" )
             if check:
-                reason = "Anti-Dublicates"
+                reason = "Anti-duplicates"
                 await self.trigger_punish(message, reason)
                 return await self.manage_message(message)
 
@@ -351,6 +367,16 @@ class AutoMod(commands.Cog):
             log_channel = user.guild.get_channel(int(log_channel))
 
         if if_muted:
+            if user.top_role.position >= self.bot.user.top_role.position:
+                if log_channel:
+                    try:
+                        await log_channel.send(f"Failed to kick {user.mention} - ``{user.id}`` for triggering **{reason}** system.")
+                    except discord.HTTPException:
+                        pass
+                    except discord.Forbidden:
+                        pass
+                return
+
             try:
                 await user.send(f"You have been kicked from {user.guild.name} due to {reason}.")
             except discord.HTTPException:
@@ -512,20 +538,20 @@ class AutoMod(commands.Cog):
         if not message.guild:
             return
 
-        if str(message.author.id) not in self.dublicates:
-            self.dublicates[str(message.author.id)] = {"count": 1, "msg": message.content}
+        if str(message.author.id) not in self.duplicates:
+            self.duplicates[str(message.author.id)] = {"count": 1, "msg": message.content}
 
-        if message.content == self.dublicates[str(message.author.id)]["msg"]:
-            if self.dublicates[str(message.author.id)]["count"] <= 3:
-                self.dublicates[str(message.author.id)]["count"] += 1
-        elif message.content != self.dublicates[str(message.author.id)]["msg"]:
-            self.dublicates[str(message.author.id)]["msgs_to_delete"] = []
-            self.dublicates[str(message.author.id)]["count"] = 1
-            self.dublicates[str(message.author.id)]["msg"] = message.content
+        if message.content == self.duplicates[str(message.author.id)]["msg"]:
+            if self.duplicates[str(message.author.id)]["count"] <= 3:
+                self.duplicates[str(message.author.id)]["count"] += 1
+        elif message.content != self.duplicates[str(message.author.id)]["msg"]:
+            self.duplicates[str(message.author.id)]["msgs_to_delete"] = []
+            self.duplicates[str(message.author.id)]["count"] = 1
+            self.duplicates[str(message.author.id)]["msg"] = message.content
 
-        if self.dublicates[str(message.author.id)]["count"] > 3:
-            self.dublicates[str(message.author.id)]["count"] = 0
-            self.dublicates[str(message.author.id)]["msg"] = None
+        if self.duplicates[str(message.author.id)]["count"] > 3:
+            self.duplicates[str(message.author.id)]["count"] = 0
+            self.duplicates[str(message.author.id)]["msg"] = None
 
             try:
                 await message.channel.purge(limit=4, check=lambda m: m.author == message.author)
