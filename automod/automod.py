@@ -43,7 +43,7 @@ class AutoMod(commands.Cog):
         self.warning_timeout = 180
 
     @commands.guild_only()
-    @checks.has_permissions(administrator=True)
+    @checks.mod_or_permissions(administrator=True)
     @commands.group(name="automod")
     async def automod_(self, ctx):
         """Setup auto moderation on this server"""
