@@ -22,7 +22,7 @@ class AutoMod(commands.Cog):
             "images": False,
             "spoliers": False,
             "mutetime": 180,
-            "maxviolations": 3,
+            "maxviolations": 6,
             "mute_role": None,
             "imagemode": [],
             "muted_users": {},
@@ -180,7 +180,7 @@ class AutoMod(commands.Cog):
             await ctx.send("Users can now send discord invites.")
         elif invites == False:
             await self.data.guild(ctx.guild).invites.set(True)
-            await ctx.send("Users will not be allowed to send links.")
+            await ctx.send("Users will not be allowed to send invites.")
 
     @automod_.command(name="duplicates")
     async def _duplicates(self, ctx):
@@ -598,12 +598,12 @@ class AutoMod(commands.Cog):
             self.duplicates[str(message.author.id)]["count"] = 1
             self.duplicates[str(message.author.id)]["msg"] = message.content
 
-        if self.duplicates[str(message.author.id)]["count"] > 3:
+        if self.duplicates[str(message.author.id)]["count"] > 6:
             self.duplicates[str(message.author.id)]["count"] = 0
             self.duplicates[str(message.author.id)]["msg"] = None
 
             try:
-                await message.channel.purge(limit=4, check=lambda m: m.author == message.author)
+                await message.channel.purge(limit=7, check=lambda m: m.author == message.author)
             except:
                 pass
 
@@ -639,7 +639,7 @@ class AutoMod(commands.Cog):
             return
 
         imagemode = await self.data.guild(message.guild).imagemode()
-        image_formats = [".jpg", ".jpeg", ".png", ".gif"]
+        image_formats = [".jpg", ".jpeg", ".png"]
 
         if imagemode:
             if message.channel.id not in imagemode:
@@ -651,7 +651,7 @@ class AutoMod(commands.Cog):
                 except:
                     pass
                 try:
-                    await message.author.send("You can only attach images or gifs in this channel.")
+                    await message.author.send("You can only attach images in this channel.")
                 except:
                     pass
                 return
@@ -666,7 +666,7 @@ class AutoMod(commands.Cog):
                 except:
                     pass
                 try:
-                    await message.author.send("You can only attach images or gifs in this channel.")
+                    await message.author.send("You can only attach images in this channel.")
                 except:
                     pass
 
