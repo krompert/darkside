@@ -40,6 +40,7 @@ class AutoMod(commands.Cog):
         self.amount_of_time = 5
         self.warning_timeout = 180
 
+
     @commands.guild_only()
     @checks.has_permissions(administrator=True)
     @commands.group(name="automod")
@@ -216,7 +217,7 @@ class AutoMod(commands.Cog):
             pass
 
         if time:
-            await self.data.guild(ctx.guild).mutetime.set(time)
+            await self.data.guild(ctx.guild).mutetime.set(int(time*60))
             await ctx.send(f"Mute time has been set to {time} minutes.")
         else:
             return await ctx.send("Invalid time provided, make sure it is just numbers.")
@@ -283,12 +284,13 @@ class AutoMod(commands.Cog):
             check = await self.spam_detection(message)
             if check:
                 reason = "Anti-Spam"
+                print(reason)
                 await self.trigger_punish(message, reason)
+                print("triggered")
                 return await self.manage_message(message)
 
         if await self.data.guild(guild).duplicates():
             check = await self.dublicate_text_check(message)
-            print(f"Check {check}" )
             if check:
                 reason = "Anti-duplicates"
                 await self.trigger_punish(message, reason)
@@ -341,15 +343,16 @@ class AutoMod(commands.Cog):
                 except:
                     pass
         if i >= self.amount_of_messages:
-            await self.data.member(author).times_violated.set(times_violated+1)
             self.spam[str(guild.id)][str(author.id)] = []
 
-            if await self.data.member(author).times_violated() >= maxviolations:
+            if maxviolations - await self.data.member(author).times_violated() <= 1:
                 try:
                     await channel.purge(limit=5, check=lambda m: m.author == author)
                 except:
                     pass
                 return True
+
+            return True
 
         return False
 
@@ -374,6 +377,8 @@ class AutoMod(commands.Cog):
                         pass
                     except discord.Forbidden:
                         pass
+                await self.data.member(user).times_violated.set(0)
+                await self.data.member(user).muted.set(False)
                 return
 
             if user.top_role.position >= self.bot.user.top_role.position:
@@ -384,6 +389,8 @@ class AutoMod(commands.Cog):
                         pass
                     except discord.Forbidden:
                         pass
+                await self.data.member(user).times_violated.set(0)
+                await self.data.member(user).muted.set(False)
                 return
 
             try:
@@ -412,14 +419,12 @@ class AutoMod(commands.Cog):
             await self.data.member(user).muted.set(False)
             return
 
-        if times_violated >= maxviolations:
+        elif times_violated >= maxviolations:
             if log_channel:
                 await self.mute_user(user=user, reason=reason, logchannel=log_channel)
             else:
                 await self.mute_user(user=user, reason=reason)
         elif times_violated < maxviolations:
-            if reason == "Anti-Spam":
-                return
 
             try:
                 await user.send(f"You have been warned for triggering **{reason}** system.")
@@ -660,7 +665,9 @@ class AutoMod(commands.Cog):
 
     async def check_blacklisted_word(self, message):
         blacklisted_words = await self.data.guild(message.guild).blacklisted_words()
-        if blacklisted_words in message.content.lower():
-            return True
+        list_of_content = message.content.lower().strip(" ")
+        for word in blacklisted_words:
+            if word in list_of_content:
+                return True
 
         return False
