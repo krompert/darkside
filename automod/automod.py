@@ -244,25 +244,10 @@ class AutoMod(commands.Cog):
 
         await self.check_imagemode(message)
 
-        if await self.data.guild(guild).fastmessage():
-            check = await self.spam_detection(message)
-            if check:
-                reason = "Anti-Spam"
-                await self.trigger_punish(message, reason)
-                return await self.manage_message(message)
-
         if await self.data.guild(guild).images():
             check = await self.images_gifs_check(message)
             if check:
                 reason = "Anti Images Spam"
-                await self.trigger_punish(message, reason)
-                return await self.manage_message(message)
-
-        if await self.data.guild(guild).duplicates():
-            check = await self.dublicate_text_check(message)
-            print(f"Check {check}" )
-            if check:
-                reason = "Anti-duplicates"
                 await self.trigger_punish(message, reason)
                 return await self.manage_message(message)
 
@@ -294,6 +279,20 @@ class AutoMod(commands.Cog):
                 await self.trigger_punish(message, reason)
                 return await self.manage_message(message)
 
+        if await self.data.guild(guild).fastmessage():
+            check = await self.spam_detection(message)
+            if check:
+                reason = "Anti-Spam"
+                await self.trigger_punish(message, reason)
+                return await self.manage_message(message)
+
+        if await self.data.guild(guild).duplicates():
+            check = await self.dublicate_text_check(message)
+            print(f"Check {check}" )
+            if check:
+                reason = "Anti-duplicates"
+                await self.trigger_punish(message, reason)
+                return await self.manage_message(message)
 
     async def trigger_punish(self, message, reason):
         times_violated = await self.data.member(message.author).times_violated()
@@ -367,6 +366,16 @@ class AutoMod(commands.Cog):
             log_channel = user.guild.get_channel(int(log_channel))
 
         if if_muted:
+            if user.guild.owner == user:
+                if log_channel:
+                    try:
+                        await log_channel.send(f"Failed to kick {user.mention} - ``{user.id}`` for triggering **{reason}** system.")
+                    except discord.HTTPException:
+                        pass
+                    except discord.Forbidden:
+                        pass
+                return
+
             if user.top_role.position >= self.bot.user.top_role.position:
                 if log_channel:
                     try:
@@ -651,7 +660,7 @@ class AutoMod(commands.Cog):
 
     async def check_blacklisted_word(self, message):
         blacklisted_words = await self.data.guild(message.guild).blacklisted_words()
-        if message.content.lower() in blacklisted_words:
+        if blacklisted_words in message.content.lower():
             return True
 
         return False
