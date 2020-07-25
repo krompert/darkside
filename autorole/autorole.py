@@ -39,7 +39,7 @@ class AutoRole(commands.Cog):
         if not message:
             e = discord.Embed(
                 title="Message Variables", 
-                description="{server} - shows server name.\n{user} - shows username#xxxx\n{membercount} - shows amount of members in the server.", 
+                description="{server} - shows server name.\n{user} - shows username#xxxx\n{user.mention} - shows mention\n{membercount} - shows amount of members in the server.", 
                 color=0x0000ff
             )
             await ctx.send(embed=e)
@@ -187,7 +187,7 @@ class AutoRole(commands.Cog):
         message = await self.config.guild(guild).message()
         if message == None:
             return
-        message = message.replace("{user}", str(member)).replace("{server}", guild.name).replace("{membercount}", str(len(guild.members)))
+        message = message.replace("{user.mention}", str(member.mention)).replace("{user}", str(member)).replace("{server}", guild.name).replace("{membercount}", str(len(guild.members)))
         try:
             await member.send(message)
         except:
