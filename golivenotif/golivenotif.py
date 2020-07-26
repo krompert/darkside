@@ -41,7 +41,7 @@ class GoLiveNotifications(commands.Cog):
             if not channel:
                 await self.config.guild(guild).channel.set(None)
                 return
-            e = discord.Embed(description=f"{member.mention} is now streaming in {channel.mention}", color=member.color, timestamp=datetime.utcnow())
+            e = discord.Embed(description=f"{member.mention} is now streaming in **{after.channel.mention}**", color=member.color, timestamp=datetime.utcnow())
             e.set_author(name=str(member), icon_url=member.avatar_url)
             e.set_footer(text="Started streaming")
             await channel.send(embed=e)
@@ -53,9 +53,33 @@ class GoLiveNotifications(commands.Cog):
             if not channel:
                 await self.config.guild(guild).channel.set(None)
                 return
-            e = discord.Embed(description=f"{member.mention} is now streaming their camera in {channel.mention}", color=member.color, timestamp=datetime.utcnow())
+            e = discord.Embed(description=f"{member.mention} is now streaming their camera in **{after.channel.mention}**", color=member.color, timestamp=datetime.utcnow())
             e.set_author(name=str(member), icon_url=member.avatar_url)
             e.set_footer(text="Started streaming the camera")
+            await channel.send(embed=e)
+        if before.self_stream == True and (before.channel != after.channel or after.self_stream == False):
+            channel_id = await self.config.guild(guild).channel()
+            if channel_id == None:
+                return
+            channel = guild.get_channel(channel_id)
+            if not channel:
+                await self.config.guild(guild).channel.set(None)
+                return
+            e = discord.Embed(description=f"{member.mention} stopped streaming.", color=0xff0000, timestamp=datetime.utcnow())
+            e.set_author(name=str(member), icon_url=member.avatar_url)
+            e.set_footer(text="Stopped streaming")
+            await channel.send(embed=e)
+        if before.self_video == True and (before.channel != after.channel or after.self_video == False):
+            channel_id = await self.config.guild(guild).channel()
+            if channel_id == None:
+                return
+            channel = guild.get_channel(channel_id)
+            if not channel:
+                await self.config.guild(guild).channel.set(None)
+                return
+            e = discord.Embed(description=f"{member.mention} stopped streaming their camera.", color=0xff0000, timestamp=datetime.utcnow())
+            e.set_author(name=str(member), icon_url=member.avatar_url)
+            e.set_footer(text="Stopped streaming the camera")
             await channel.send(embed=e)
 
             
