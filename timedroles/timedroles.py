@@ -37,7 +37,7 @@ class TimedRoles(commands.Cog):
                 roles.remove(srole)
                 await ctx.send(f"Removed **{role.name}** from timed roles.")
             else:
-                data = re.search(r"^([0-9]+)(?: )?(minute|m|hour|h|day|d)", time, re.IGNORECASE)
+                data = re.search(r"^([0-9]+)(?: )?(minute(?:s)?|m|hour(?:s)?|h|day(?:s)?|d)$", time, re.IGNORECASE)
                 if not data or len(data.groups()) != 2:
                     await ctx.send(embed=invalid_time)
                     return
@@ -52,7 +52,7 @@ class TimedRoles(commands.Cog):
         if not time:
             await ctx.send(embed=invalid_time)
             return
-        data = re.search(r"^([0-9]+)(?: )?(minute|m|hour|h|day|d)", time, re.IGNORECASE)
+        data = re.search(r"^([0-9]+)(?: )?(minute(?:s)?|m|hour(?:s)?|h|day(?:s)?|d)$", time, re.IGNORECASE)
         if not data or len(data.groups()) != 2:
             await ctx.send(embed=invalid_time)
             return
@@ -142,6 +142,8 @@ class TimedRoles(commands.Cog):
                     members_data = await self.config.all_members(guild=g)
                     for mid in members_data:
                         member = g.get_member(mid)
+                        if not member:
+                            continue
                         timed_roles = members_data[mid]["timed_roles"]
                         for mrole in member.roles:
                             if mrole.id in [r[0] for r in await self.config.guild(g).timed_roles()]:
