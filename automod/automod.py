@@ -22,12 +22,13 @@ class AutoMod(commands.Cog):
             "images": False,
             "spoliers": False,
             "mutetime": 180,
-            "maxviolations": 6,
+            "maxviolations": 3,
             "mute_role": None,
             "imagemode": [],
             "muted_users": {},
             "invite_channel": None,
             "kicked_users": {},
+            "oneword": True,
         }
         default_member = {
             "times_violated": 0,
@@ -130,6 +131,17 @@ class AutoMod(commands.Cog):
 
         await ctx.send(f"Below are all the blacklisted words.\n\n {', '.join(blacklisted_words)}")
 
+    @automod_.command(name="oneword")
+    async def _oneword(self, ctx):
+        """Enable or disable one words."""
+        oneword = await self.data.guild(ctx.guild).oneword()
+
+        if oneword == True:
+            await self.data.guild(ctx.guild).oneword.set(False)
+            await ctx.send("Users will not be be allowed to send text along the images.")
+        elif oneword == False:
+            await self.data.guild(ctx.guild).oneword.set(True)
+            await ctx.send("Users will be only allowed to send one word message along the image.")
 
     @automod_.command(name="links")
     async def _links(self, ctx):
@@ -180,7 +192,7 @@ class AutoMod(commands.Cog):
             await ctx.send("Users can now send discord invites.")
         elif invites == False:
             await self.data.guild(ctx.guild).invites.set(True)
-            await ctx.send("Users will not be allowed to send invites.")
+            await ctx.send("Users will not be allowed to send links.")
 
     @automod_.command(name="duplicates")
     async def _duplicates(self, ctx):
@@ -254,7 +266,7 @@ class AutoMod(commands.Cog):
         if message.author.bot:
             return
 
-        if await self.whitelisted_check(message.author, message.guild):
+        if await self.whitelisted_check(message.author, message.channel, message.guild):
             return
 
         await self.check_imagemode(message)
@@ -298,9 +310,7 @@ class AutoMod(commands.Cog):
             check = await self.spam_detection(message)
             if check:
                 reason = "Anti-Spam"
-                print(reason)
                 await self.trigger_punish(message, reason)
-                print("triggered")
                 return await self.manage_message(message)
 
         if await self.data.guild(guild).duplicates():
@@ -566,7 +576,7 @@ class AutoMod(commands.Cog):
 
         return mute_role
 
-    async def whitelisted_check(self, user, guild):
+    async def whitelisted_check(self, user, channel, guild):
         members = await self.data.guild(guild).whitelisted_members()
         roles = await self.data.guild(guild).whitelisted_roles()
         user = guild.get_member(int(user.id))
@@ -598,12 +608,12 @@ class AutoMod(commands.Cog):
             self.duplicates[str(message.author.id)]["count"] = 1
             self.duplicates[str(message.author.id)]["msg"] = message.content
 
-        if self.duplicates[str(message.author.id)]["count"] > 6:
+        if self.duplicates[str(message.author.id)]["count"] > 3:
             self.duplicates[str(message.author.id)]["count"] = 0
             self.duplicates[str(message.author.id)]["msg"] = None
 
             try:
-                await message.channel.purge(limit=7, check=lambda m: m.author == message.author)
+                await message.channel.purge(limit=4, check=lambda m: m.author == message.author)
             except:
                 pass
 
@@ -639,21 +649,37 @@ class AutoMod(commands.Cog):
             return
 
         imagemode = await self.data.guild(message.guild).imagemode()
-        image_formats = [".jpg", ".jpeg", ".png"]
+        image_formats = [".jpg", ".jpeg", ".png", ".gif"]
 
         if imagemode:
             if message.channel.id not in imagemode:
                 return
+
+            if await self.data.guild(message.guild).oneword():
+                word = message.content
+                if word:
+                    if word != "donate":
+                        try:
+                            await message.author.send("You can only send one word message along the image which says **donate**.")
+                        except:
+                            pass
+                        try:
+                            await message.delete()
+                        except:
+                            pass
+                        return
 
             if not message.attachments:
                 try:
                     await message.delete()
                 except:
                     pass
+
                 try:
-                    await message.author.send("You can only attach images in this channel.")
+                    await message.author.send("You can only attach images or gifs in this channel.")
                 except:
                     pass
+
                 return
 
             if message.attachments:
@@ -666,7 +692,7 @@ class AutoMod(commands.Cog):
                 except:
                     pass
                 try:
-                    await message.author.send("You can only attach images in this channel.")
+                    await message.author.send("You can only attach images or gifs in this channel.")
                 except:
                     pass
 
