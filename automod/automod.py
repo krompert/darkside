@@ -28,7 +28,7 @@ class AutoMod(commands.Cog):
             "muted_users": {},
             "invite_channel": None,
             "kicked_users": {},
-            "oneword": True,
+            "oneword": [],
         }
         default_member = {
             "times_violated": 0,
@@ -132,16 +132,18 @@ class AutoMod(commands.Cog):
         await ctx.send(f"Below are all the blacklisted words.\n\n {', '.join(blacklisted_words)}")
 
     @automod_.command(name="oneword")
-    async def _oneword(self, ctx):
+    async def _oneword(self, ctx, channel: discord.TextChannel):
         """Enable or disable one words."""
         oneword = await self.data.guild(ctx.guild).oneword()
 
-        if oneword == True:
-            await self.data.guild(ctx.guild).oneword.set(False)
-            await ctx.send("Users will not be be allowed to send text along the images.")
-        elif oneword == False:
-            await self.data.guild(ctx.guild).oneword.set(True)
-            await ctx.send("Users will be only allowed to send one word message along the image.")
+        if channel.id in oneword:
+            oneword.remove(channel.id)
+            await self.data.guild(ctx.guild).oneword.set(oneword)
+            await ctx.send(f"{channel.mention} is no longer restricted to oneword.")
+        elif channel.id not in oneword:
+            oneword.append(channel.id)
+            await self.data.guild(ctx.guild).oneword.set(oneword)
+            await ctx.send(f"{channel.mention} is now restricted to oneword.")
 
     @automod_.command(name="links")
     async def _links(self, ctx):
@@ -651,16 +653,13 @@ class AutoMod(commands.Cog):
         imagemode = await self.data.guild(message.guild).imagemode()
         image_formats = [".jpg", ".jpeg", ".png", ".gif"]
 
-        if imagemode:
-            if message.channel.id not in imagemode:
-                return
-
-            if await self.data.guild(message.guild).oneword():
+        if await self.data.guild(message.guild).oneword():
+            if message.channel.id in (await self.data.guild(message.guild).oneword()):
                 word = message.content
                 if word:
-                    if word != "donate":
+                    if word.lower() not in [".donate","donate"]:
                         try:
-                            await message.author.send("You can only send one word message along the image which says **donate**.")
+                            await message.author.send("You can only send one word message which says **donate**.")
                         except:
                             pass
                         try:
@@ -668,6 +667,10 @@ class AutoMod(commands.Cog):
                         except:
                             pass
                         return
+
+        if imagemode:
+            if message.channel.id not in imagemode:
+                return
 
             if not message.attachments:
                 try:
