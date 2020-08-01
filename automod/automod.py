@@ -135,6 +135,11 @@ class AutoMod(commands.Cog):
     async def _oneword(self, ctx, channel: discord.TextChannel):
         """Enable or disable one words."""
         oneword = await self.data.guild(ctx.guild).oneword()
+        try:
+            if isinstance(oneword, boolean):
+                await self.data.guild(ctx.guild).oneword.set([])
+        except:
+            await self.data.guild(ctx.guild).oneword.set([])
 
         if channel.id in oneword:
             oneword.remove(channel.id)
