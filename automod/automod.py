@@ -141,6 +141,8 @@ class AutoMod(commands.Cog):
         except:
             await self.data.guild(ctx.guild).oneword.set([])
 
+        oneword = await self.data.guild(ctx.guild).oneword()
+        
         if channel.id in oneword:
             oneword.remove(channel.id)
             await self.data.guild(ctx.guild).oneword.set(oneword)
