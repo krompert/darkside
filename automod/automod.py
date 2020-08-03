@@ -186,10 +186,10 @@ class AutoMod(commands.Cog):
 
         if images == True:
             await self.data.guild(ctx.guild).images.set(False)
-            await ctx.send("Users can now send images and gifs.")
+            await ctx.send("Users can now send images.")
         elif images == False:
             await self.data.guild(ctx.guild).images.set(True)
-            await ctx.send("Users will not be allowed to send images and gifs.")
+            await ctx.send("Users will not be allowed to send images.")
 
     @automod_.command(name="invites")
     async def _invites(self, ctx):
@@ -634,7 +634,7 @@ class AutoMod(commands.Cog):
     async def images_gifs_check(self, message):
         images = await self.data.guild(message.guild).images()
         if images:
-            self.formats = [".jpg", ".jpeg", ".png", ".gif"]
+            self.formats = [".jpg", ".jpeg", ".png"]
             if message.attachments:
                 for format in self.formats:
                     if message.attachments[0].filename.endswith(format):
@@ -658,15 +658,15 @@ class AutoMod(commands.Cog):
             return
 
         imagemode = await self.data.guild(message.guild).imagemode()
-        image_formats = [".jpg", ".jpeg", ".png", ".gif"]
+        image_formats = [".jpg", ".jpeg", ".png"]
 
         if await self.data.guild(message.guild).oneword():
             if message.channel.id in (await self.data.guild(message.guild).oneword()):
                 word = message.content
                 if word:
-                    if word.lower() not in [".donate","donate"]:
+                    if word.lower() not in [".donate","donate",".agree"]:
                         try:
-                            await message.author.send("You can only send one word message which says **donate**.")
+                            await message.author.send("You can only send one word in this channel, **.donate.** for Donations channel or **.agree** for Jail-Room")
                         except:
                             pass
                         try:
@@ -686,7 +686,7 @@ class AutoMod(commands.Cog):
                     pass
 
                 try:
-                    await message.author.send("You can only attach images or gifs in this channel.")
+                    await message.author.send("You can only attach images in this channel.")
                 except:
                     pass
 
@@ -702,7 +702,7 @@ class AutoMod(commands.Cog):
                 except:
                     pass
                 try:
-                    await message.author.send("You can only attach images or gifs in this channel.")
+                    await message.author.send("You can only attach images in this channel.")
                 except:
                     pass
 
