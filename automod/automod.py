@@ -666,7 +666,7 @@ class AutoMod(commands.Cog):
                 if word:
                     if word.lower() not in [".donate","donate",".agree"]:
                         try:
-                            await message.author.send("You can only send one word in this channel, **.donate.** for Donations channel or **.agree** for Jail-Room")
+                            await message.author.send("You can only send one word in this channel, **.donate**")
                         except:
                             pass
                         try:
