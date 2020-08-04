@@ -84,19 +84,9 @@ class Application(commands.Cog):
             position = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
-        await ctx.author.send("Social Media Plataforms?")
-        try:
-			name = await self.bot.wait_for("message", timeout=120, check=check)
-        except asyncio.TimeoutError:
-            return await ctx.send("You took too long. Try again, please.")
         await ctx.author.send("What is your name?")
         try:
-	    	followers = await self.bot.wait_for("message", timeout=120, check=check)
-        except asyncio.TimeoutError:
-            return await ctx.send("You took too long. Try again, please.")
-        await ctx.author.send("How Many Followers you have on each plataform?")
-        try:
-            medias = await self.bot.wait_for("message", timeout=120, check=check)
+            name = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
         await ctx.author.send("How old are you?")
@@ -120,13 +110,13 @@ class Application(commands.Cog):
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
         await ctx.author.send(
-            "Do you have any previous experience? If so, please describe."
+            "Social Medias and how many followers?, please describe."
         )
         try:
             experience = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
-        await ctx.author.send("Why do you want to be a member of our staff?")
+        await ctx.author.send("Why do you want to be a member of our staff? Further review may take place with Admins.")
         try:
             reason = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
@@ -141,9 +131,7 @@ class Application(commands.Cog):
         )
         embed.add_field(name="Name:", value=name.content, inline=True)
         embed.add_field(name="Age:", value=age.content, inline=True)
-        embed.add_field(name="Social Medias:", value=medias.content, inline=True)
-		embed.add_field(name="Followers:", value=followers.content, inline=True)   
-   	    embed.add_field(name="Timezone:", value=timezone.content, inline=True)
+        embed.add_field(name="Timezone:", value=timezone.content, inline=True)
         embed.add_field(name="Desired position:", value=position.content, inline=True)
         embed.add_field(name="Active days/week:", value=days.content, inline=True)
         embed.add_field(name="Active hours/day:", value=hours.content, inline=True)
