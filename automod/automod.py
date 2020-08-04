@@ -135,14 +135,8 @@ class AutoMod(commands.Cog):
     async def _oneword(self, ctx, channel: discord.TextChannel):
         """Enable or disable one words."""
         oneword = await self.data.guild(ctx.guild).oneword()
-        try:
-            if isinstance(oneword, boolean):
-                await self.data.guild(ctx.guild).oneword.set([])
-        except:
-            await self.data.guild(ctx.guild).oneword.set([])
 
-        oneword = await self.data.guild(ctx.guild).oneword()
-        
+        await ctx.send(oneword)
         if channel.id in oneword:
             oneword.remove(channel.id)
             await self.data.guild(ctx.guild).oneword.set(oneword)
@@ -186,10 +180,10 @@ class AutoMod(commands.Cog):
 
         if images == True:
             await self.data.guild(ctx.guild).images.set(False)
-            await ctx.send("Users can now send images.")
+            await ctx.send("Users can now send images and gifs.")
         elif images == False:
             await self.data.guild(ctx.guild).images.set(True)
-            await ctx.send("Users will not be allowed to send images.")
+            await ctx.send("Users will not be allowed to send images and gifs.")
 
     @automod_.command(name="invites")
     async def _invites(self, ctx):
@@ -634,7 +628,7 @@ class AutoMod(commands.Cog):
     async def images_gifs_check(self, message):
         images = await self.data.guild(message.guild).images()
         if images:
-            self.formats = [".jpg", ".jpeg", ".png"]
+            self.formats = [".jpg", ".jpeg", ".png", ".gif"]
             if message.attachments:
                 for format in self.formats:
                     if message.attachments[0].filename.endswith(format):
@@ -658,15 +652,15 @@ class AutoMod(commands.Cog):
             return
 
         imagemode = await self.data.guild(message.guild).imagemode()
-        image_formats = [".jpg", ".jpeg", ".png"]
+        image_formats = [".jpg", ".jpeg", ".png", ".gif"]
 
         if await self.data.guild(message.guild).oneword():
             if message.channel.id in (await self.data.guild(message.guild).oneword()):
                 word = message.content
                 if word:
-                    if word.lower() not in [".donate","donate",".agree"]:
+                    if word.lower() not in [".donate","donate"]:
                         try:
-                            await message.author.send("You can only send one word in this channel, **.donate**")
+                            await message.author.send("You can only send one word message which says **donate**.")
                         except:
                             pass
                         try:
@@ -686,7 +680,7 @@ class AutoMod(commands.Cog):
                     pass
 
                 try:
-                    await message.author.send("You can only attach images in this channel.")
+                    await message.author.send("You can only attach images or gifs in this channel.")
                 except:
                     pass
 
@@ -702,7 +696,7 @@ class AutoMod(commands.Cog):
                 except:
                     pass
                 try:
-                    await message.author.send("You can only attach images in this channel.")
+                    await message.author.send("You can only attach images or gifs in this channel.")
                 except:
                     pass
 
@@ -741,10 +735,13 @@ class AutoMod(commands.Cog):
     async def spoilers_check(self, message):
         spoliers = await self.data.guild(message.guild).spoliers()
         regex = "(?i)(?:^|\W)\|\|.+\|\|(?:$|\W)"
-        if spoliers:
-            if re.search(regex, message.content):
-                return True
+        try:
+            if spoliers:
+                if re.search(regex, message.content):
+                    return True
 
+        except:
+            pass
         return False
 
     async def links_check(self, message):
