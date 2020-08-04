@@ -657,9 +657,9 @@ class AutoMod(commands.Cog):
             if message.channel.id in (await self.data.guild(message.guild).oneword()):
                 word = message.content
                 if word:
-                    if word.lower() not in [".donate","donate"]:
+                    if word.lower() not in [".donate","donate,.agree"]:
                         try:
-                            await message.author.send("You can only send one word message which says **donate**.")
+                            await message.author.send("You can only type **donate** to get a lobby or **.agree** to  gain server access. Please read rules")
                         except:
                             pass
                         try:
