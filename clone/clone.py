@@ -16,7 +16,7 @@ class RoleCloner(commands.Cog):
 
         role2_obj = discord.utils.get(ctx.guild.roles, name=role2)
         if not role2_obj:
-            role2_obj = await ctx.guild.create_role(name=role2, permissions=role1.permissions, hoist=role1.hoist, mentionalable=role1.mentionable)
+            role2_obj = await ctx.guild.create_role(name=role2, permissions=role1.permissions, hoist=role1.hoist, mentionable=role1.mentionable)
             await ctx.send(f"**{role2_obj.name}** role has been created.")
         elif role2_obj:
             try:
