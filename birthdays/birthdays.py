@@ -5,12 +5,14 @@ import contextlib
 import datetime
 import discord
 import itertools
+import random
 
 from redbot.core import commands, Config, checks
 from redbot.core.bot import Red
 from redbot.core.config import Group
 from redbot.core.i18n import Translator, cog_i18n
 from redbot.core.commands import Context, Cog
+from pytz import timezone
 
 T_ = Translator("Birthdays", __file__)  # pygettext3 -Dnp locales birthdays.py
 
@@ -25,8 +27,8 @@ def _(s):
 
 @cog_i18n(T_)
 class Birthdays(Cog):
-    """Announces people's birthdays and gives them a birthday role for the whole EST day"""
-    __author__ = "ZeLarp. Edited by Savage"
+    """Announces people's birthdays and gives them a birthday role for the whole UTC day"""
+    __author__ = "ZeLarpMaster#0818"
 
     # Behavior related constants
     DATE_GROUP = "DATE"
@@ -36,14 +38,14 @@ class Birthdays(Cog):
     BDAY_LIST_TITLE = _("Birthday List")
 
     # Message constants
-    BDAY_WITH_YEAR = _("<@!{}> Birthday is today @everyone <@!{}> is now **{} years old. Let da party Begin mofosss :LC_dance_blob_3::tada:")
-    BDAY_WITHOUT_YEAR = _("It's <@!{}>'s Birthday today @everyone <@!{}> How old are you today? Bring dez shots mofosss! :LC_dance_blob_3::tada:")
+    BDAY_WITH_YEAR = _("<@!{}> is now **{} years old**. :tada:")
+    BDAY_WITHOUT_YEAR = _("It's <@!{}>'s birthday today! :tada:")
     ROLE_SET = _(":white_check_mark: The birthday role on **{g}** has been set to: **{r}**.")
     BDAY_INVALID = _(":x: The birthday date you entered is invalid. It must be `MM-DD`.")
     BDAY_SET = _(":white_check_mark: Your birthday has been set to: **{}**.")
     CHANNEL_SET = _(":white_check_mark: "
                     "The channel for announcing birthdays on **{g}** has been set to: **{c}**.")
-    BDAY_REMOVED = _(":put_litter_in_its_place: Your birthday has been removed. You're so old, that you rather not to share. Booooooo!!")
+    BDAY_REMOVED = _(":put_litter_in_its_place: Your birthday has been removed.")
 
     def __init__(self, bot: Red):
         super().__init__()
@@ -54,7 +56,7 @@ class Birthdays(Cog):
         self.config = Config.get_conf(self, identifier=unique_id)
         self.config.init_custom(self.DATE_GROUP, 1)
         self.config.init_custom(self.GUILD_DATE_GROUP, 2)
-        self.config.register_guild(channel=None, role=None, yesterdays=[])
+        self.config.register_guild(channel=None, role=None, yesterdays=[], messages=[])
         self.bday_loop = asyncio.ensure_future(self.initialise())  # Starts a loop which checks daily for birthdays
         asyncio.ensure_future(self.check_breaking_change())
 
@@ -63,7 +65,8 @@ class Birthdays(Cog):
         await self.bot.wait_until_ready()
         with contextlib.suppress(RuntimeError):
             while self == self.bot.get_cog(self.__class__.__name__):  # Stops the loop when the cog is reloaded
-                now = datetime.datetime.estnow()
+                eastern = timezone('US/Eastern')
+                now = datetime.datetime.now(eastern)
                 tomorrow = (now + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
                 await asyncio.sleep((tomorrow - now).total_seconds())
                 await self.clean_yesterday_bdays()
@@ -78,6 +81,30 @@ class Birthdays(Cog):
     async def bday(self, ctx: Context):
         """Birthday settings"""
         pass
+
+    @bday.command(name="addmessage")
+    @checks.mod_or_permissions(manage_roles=True)
+    async def add_message(self, ctx, *, message:str):
+        """Add a message ot the list!"""
+        messages = await self.config.guild(ctx.guild).messages()
+        if message not in messages:
+            messages.append(message)
+            await self.config.guild(ctx.guild).messages.set(messages)
+            await ctx.send("Messaged added to the list!")
+        elif message in messages:
+            await ctx.send("Messages already exists in the list!")
+
+    @bday.command(name="removemessage")
+    @checks.mod_or_permissions(manage_roles=True)
+    async def remove_message(self, ctx, *, message:str):
+        """Remove a message from the list"""
+        messages = await self.config.guild(ctx.guild).messages()
+        if message in messages:
+            messages.remove(message)
+            await self.config.guild(ctx.guild).messages.set(messages)
+            await ctx.send("Messaged removed from the list!")
+        elif message in messages:
+            await ctx.send("Messages doesn't exist in the list!")
 
     @bday.command(name="channel")
     @checks.mod_or_permissions(manage_roles=True)
@@ -114,6 +141,7 @@ class Birthdays(Cog):
         channel = message.channel
         author = message.author
         birthday = self.parse_date(date)
+        messages = await self.config.guild(ctx.guild).messages()
         if birthday is None:
             await channel.send(self.BDAY_INVALID())
         else:
@@ -121,7 +149,12 @@ class Birthdays(Cog):
             await self.get_date_config(message.guild.id, birthday.toordinal()).get_attr(author.id).set(year)
             bday_month_str = birthday.strftime("%B")
             bday_day_str = birthday.strftime("%d").lstrip("0")  # To remove the zero-capped
-            await channel.send(self.BDAY_SET(bday_month_str + " " + bday_day_str))
+
+            if messages:
+                message2 = random.choice(messages).replace("{user}", ctx.author.mention).replace("{user.mention}", ctx.author.mention)
+                await channel.send(self.BDAY_SET(bday_month_str + " " + bday_day_str) + f" {message2}")
+            elif not messages:
+                await channel.send(self.BDAY_SET(bday_month_str + " " + bday_day_str))
 
     @bday.command(name="list")
     async def bday_list(self, ctx: Context):
@@ -218,7 +251,8 @@ class Birthdays(Cog):
     async def do_today_bdays(self):
         guild_configs = await self.get_all_date_configs()
         for guild_id, guild_config in guild_configs.items():
-            this_date = datetime.datetime.estnow().date().replace(year=1)
+            eastern = timezone('US/Eastern')
+            this_date = datetime.datetime.now(eastern).date().replace(year=1)
             todays_bday_config = guild_config.get(str(this_date.toordinal()), {})
             for user_id, year in todays_bday_config.items():
                 asyncio.ensure_future(self.handle_bday(int(user_id), year))
