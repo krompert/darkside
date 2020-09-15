@@ -86,9 +86,9 @@ class Rules(commands.Cog):
     async def _agree(self, ctx):
         "Get a role."
         msg = f"""{ctx.author.mention}
-                Please react with an emoji below to gain access to the server and proper roles. Ask if you need any assistance.
+                Please react with the emoji for your Union to gain access to the server and proper roles. Please tag @Leaders if you need any assistance.
 
-                 @Over18 will give access to NSFW channels, if you are under 18, please refer yourself from reacting to this role!\n\n"""
+                Only 18+ members should ever react to @Over18 ! This will give access to NSFW channels, if you are under 18, please refer yourself from reacting to this role!\n\n"""
         emojis_db = await self.data.guild(ctx.guild).roles()
         nsfw_roles = await self.data.guild(ctx.guild).nsfw()
         nonnsfw_roles = await self.data.guild(ctx.guild).nonnsfw()
@@ -177,6 +177,7 @@ class Rules(commands.Cog):
         role_rewarded_bool = False
         not_nsfw_rewarded = False
         LOG_CHANNEL = await self.data.guild(ctx.guild).channel()
+        emoji_added_to_user = None
         if LOG_CHANNEL:
             LOG_CHANNEL = ctx.guild.get_channel(int(LOG_CHANNEL))
 
@@ -198,14 +199,17 @@ class Rules(commands.Cog):
                         if role:
                             try:
                                 await ctx.author.add_roles(role)
+                                emoji_added_to_user = str(reaction.emoji.id)
                                 role_rewarded_bool = True
                                 times_reacted += 1
 
                                 await ctx.send(f"Gave you the **{role.name}** role.")
                                 if LOG_CHANNEL:
                                     await LOG_CHANNEL.send(f"**{ctx.author.mention}** was given the **{role.name}** role in.")
-
-                            except:
+                                
+                                await self.remove_all_prev_roles(ctx.author, ctx.guild, emoji_added_to_user)
+                            except Exception as e:
+                                print(e)
                                 await ctx.send("Couldn't reward the role!")
                     else:
                         await ctx.send("You can't react again for the same category.")
@@ -216,6 +220,7 @@ class Rules(commands.Cog):
                             if role:
                                 try:
                                     await ctx.author.add_roles(role)
+                                    emoji_added_to_user = str(reaction.emoji.id)
                                     not_nsfw_rewarded = True
                                     times_reacted += 1
 
@@ -223,7 +228,10 @@ class Rules(commands.Cog):
                                     if LOG_CHANNEL:
                                         await LOG_CHANNEL.send(f"**{ctx.author.mention}** was given the **{role.name}** role in.")
 
-                                except:
+                                    await self.remove_all_prev_roles(ctx.author, ctx.guild, emoji_added_to_user)
+                                    
+                                except Exception as e:
+                                    print(e)
                                     await ctx.send("Couldn't reward the role!")
                         else:
                             await ctx.send("You can't react again to the same category.")
@@ -233,6 +241,7 @@ class Rules(commands.Cog):
                             if role:
                                 try:
                                     await ctx.author.add_roles(role)
+                                    emoji_added_to_user = str(reaction.emoji.id)
                                     not_nsfw_rewarded = True
                                     times_reacted += 1
 
@@ -240,7 +249,10 @@ class Rules(commands.Cog):
                                     if LOG_CHANNEL:
                                         await LOG_CHANNEL.send(f"**{ctx.author.mention}** was given the **{role.name}** role in.")
 
-                                except:
+                                    await self.remove_all_prev_roles(ctx.author, ctx.guild, emoji_added_to_user)
+                                    
+                                except Exception as e:
+                                    print(e)
                                     await ctx.send("Couldn't reward the role!")
                         else:
                             await ctx.send("You can't react again to the same category.")
@@ -257,3 +269,24 @@ class Rules(commands.Cog):
                 await msg.add_reaction(reaction)
             except:
                 pass
+
+    async def remove_all_prev_roles(self, author, guild, prev_reaction):
+        emojis_db = await self.data.guild(guild).roles()
+        nsfw_roles = await self.data.guild(guild).nsfw()
+        nonnsfw_roles = await self.data.guild(guild).nonnsfw()
+        
+        emojis_db.update(nsfw_roles)
+        emojis_db.update(nonnsfw_roles)
+        
+        for emoji in emojis_db:
+            if emoji != prev_reaction:
+                role = guild.get_role(emojis_db[emoji]["role_id"])
+                if role:
+                    if role in author.roles:
+                        try:
+                            await author.remove_roles(role)
+                        except:
+                            pass
+                        
+                
+                
