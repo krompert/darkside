@@ -220,16 +220,13 @@ class Rules(commands.Cog):
                             if role:
                                 try:
                                     await ctx.author.add_roles(role)
-                                    emoji_added_to_user = str(reaction.emoji.id)
                                     not_nsfw_rewarded = True
                                     times_reacted += 1
 
                                     await ctx.send(f"Gave you the **{role.name}** role.")
                                     if LOG_CHANNEL:
                                         await LOG_CHANNEL.send(f"**{ctx.author.mention}** was given the **{role.name}** role in.")
-
-                                    await self.remove_all_prev_roles(ctx.author, ctx.guild, emoji_added_to_user)
-                                    
+                                                                            
                                 except Exception as e:
                                     print(e)
                                     await ctx.send("Couldn't reward the role!")
@@ -241,16 +238,13 @@ class Rules(commands.Cog):
                             if role:
                                 try:
                                     await ctx.author.add_roles(role)
-                                    emoji_added_to_user = str(reaction.emoji.id)
                                     not_nsfw_rewarded = True
                                     times_reacted += 1
 
                                     await ctx.send(f"Gave you the **{role.name}** role.")
                                     if LOG_CHANNEL:
                                         await LOG_CHANNEL.send(f"**{ctx.author.mention}** was given the **{role.name}** role in.")
-
-                                    await self.remove_all_prev_roles(ctx.author, ctx.guild, emoji_added_to_user)
-                                    
+                                
                                 except Exception as e:
                                     print(e)
                                     await ctx.send("Couldn't reward the role!")
@@ -272,12 +266,7 @@ class Rules(commands.Cog):
 
     async def remove_all_prev_roles(self, author, guild, prev_reaction):
         emojis_db = await self.data.guild(guild).roles()
-        nsfw_roles = await self.data.guild(guild).nsfw()
-        nonnsfw_roles = await self.data.guild(guild).nonnsfw()
-        
-        emojis_db.update(nsfw_roles)
-        emojis_db.update(nonnsfw_roles)
-        
+                
         for emoji in emojis_db:
             if emoji != prev_reaction:
                 role = guild.get_role(emojis_db[emoji]["role_id"])
