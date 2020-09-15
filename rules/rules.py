@@ -2,6 +2,7 @@ import discord
 from redbot.core import commands, checks, Config
 from redbot.core.bot import Red
 import re
+import math
 
 emoji_regex = re.compile("<(?:a|):.+:([0-9]+)>")
 
@@ -65,7 +66,7 @@ class Rules(commands.Cog):
 
     @rules.command(name="nonnsfw")
     async def _nonnsfw(self, ctx, role: discord.Role, emoji: str):
-        "Link a role for the over 18+ content."
+        "Link a role for the not over 18+ content."
         emote = self.bot.get_emoji(int(emoji_regex.match(emoji).group(1)))
         if emote:
             await self.data.guild(ctx.guild).nonnsfw.set_raw(emote.id,  value={"role_id": role.id})
@@ -85,59 +86,91 @@ class Rules(commands.Cog):
     async def _agree(self, ctx):
         "Get a role."
         msg = f"""{ctx.author.mention}
-                Please react with the emoji below gain access to the server and proper roles. Please ask for help if you need any assistance.
+                Please react with the emoji for your Union to gain access to the server and proper roles. Please tag @Leaders if you need any assistance.
 
                 Only 18+ members should ever react to @Over18 ! This will give access to NSFW channels, if you are under 18, please refer yourself from reacting to this role!\n\n"""
         emojis_db = await self.data.guild(ctx.guild).roles()
         nsfw_roles = await self.data.guild(ctx.guild).nsfw()
         nonnsfw_roles = await self.data.guild(ctx.guild).nonnsfw()
+        all_reactions = []
         reactions = []
+        msgs_ids = []
+        msgs_count = 0
+        message_obj = None
         if emojis_db:
             for emoji in emojis_db:
+                if msgs_count == 10:
+                    embed=discord.Embed(description=msg)
+                    message_obj = await ctx.send(embed=embed)
+                    msgs_ids.append(message_obj.id)
+                    await self.add_all_reactions(message_obj, reactions)
+                    msg = ""
+                    reactions = []
+                    msgs_count = 0
+
                 emoji_obj = self.bot.get_emoji(int(emoji))
                 if emoji_obj:
                     role = ctx.guild.get_role(emojis_db[emoji]["role_id"])
                     if role:
                         msg += f"**-** React with {emoji_obj} to get the {role.mention} role.\n"
                         reactions.append(emoji_obj)
+                        all_reactions.append(emoji_obj)
+                        msgs_count += 1
 
             for emoji in nsfw_roles:
+                if msgs_count == 10:
+                    embed=discord.Embed(description=msg)
+                    message_obj = await ctx.send(embed=embed)
+                    msgs_ids.append(message_obj.id)
+                    await self.add_all_reactions(message_obj, reactions)
+                    msg = ""
+                    reactions = []
+                    msgs_count = 0
+
                 emoji_obj = self.bot.get_emoji(int(emoji))
                 if emoji_obj:
                     role = ctx.guild.get_role(nsfw_roles[emoji]["role_id"])
                     if role:
                         msg += f"**-** React with {emoji_obj} to get the {role.mention} role, allows you access to 18+ content.\n"
                         reactions.append(emoji_obj)
+                        all_reactions.append(emoji_obj)
+                        msgs_count += 1
+
 
             for emoji in nonnsfw_roles:
+                if msgs_count == 10:
+                    embed=discord.Embed(description=msg)
+                    message_obj = await ctx.send(embed=embed)
+                    msgs_ids.append(message_obj.id)
+                    await self.add_all_reactions(message_obj, reactions)
+                    msg = ""
+                    reactions = []
+                    msgs_count = 0
+
                 emoji_obj = self.bot.get_emoji(int(emoji))
                 if emoji_obj:
                     role = ctx.guild.get_role(nonnsfw_roles[emoji]["role_id"])
                     if role:
                         msg += f"**-** React with {emoji_obj} to get the {role.mention} role, if you do not wish to have access to 18+ content.\n"
                         reactions.append(emoji_obj)
+                        all_reactions.append(emoji_obj)
+                        msgs_count += 1
 
-        if len(msg) > 2000:
-            embed=discord.Embed(description=msg[:1900])
-            await ctx.send(embed=embed)
-            embed=discord.Embed(description=msg[1900:])
-            message = await ctx.send(embed=embed)
-        else:
-            embed=discord.Embed(description=msg)
-            message = await ctx.send(embed=embed)
-
-        for reaction in reactions:
-            try:
-                await message.add_reaction(reaction)
-            except:
-                pass
+            if msgs_count <= 10:
+                embed=discord.Embed(description=msg)
+                message_obj = await ctx.send(embed=embed)
+                msgs_ids.append(message_obj.id)
+                await self.add_all_reactions(message_obj, reactions)
+                msg = ""
+                reactions = []
+                msgs_count = 0
 
         def reactioncheck(reaction, user):
             if user != self.bot.user:
                 if user == ctx.author:
                     if reaction.message.channel == ctx.channel:
-                        if reaction.emoji in reactions:
-                            if reaction.message.id == message.id:
+                        if reaction.emoji in all_reactions:
+                            if reaction.message.id in msgs_ids:
                                 return True
 
         times_reacted = 0
@@ -146,13 +179,11 @@ class Rules(commands.Cog):
         LOG_CHANNEL = await self.data.guild(ctx.guild).channel()
         if LOG_CHANNEL:
             LOG_CHANNEL = ctx.guild.get_channel(int(LOG_CHANNEL))
+
         while times_reacted < 2:
             try:
                 reaction, author = await self.bot.wait_for("reaction_add", timeout=180, check=reactioncheck)
             except:
-                await message.edit(content="You timed out, please try again.", embed=None)
-                await message.clear_reactions()
-
                 try:
                     await ctx.channel.purge(check=lambda m: not m.pinned)
                 except:
@@ -160,7 +191,7 @@ class Rules(commands.Cog):
 
                 return
 
-            if reaction.emoji in reactions:
+            if reaction.emoji in all_reactions:
                 if str(reaction.emoji.id) in emojis_db:
                     if not role_rewarded_bool:
                         role = ctx.guild.get_role(emojis_db[str(reaction.emoji.id)]["role_id"])
@@ -213,12 +244,16 @@ class Rules(commands.Cog):
                                     await ctx.send("Couldn't reward the role!")
                         else:
                             await ctx.send("You can't react again to the same category.")
-        try:
-            await message.clear_reactions()
-        except:
-            pass
 
         try:
             await ctx.channel.purge(check=lambda m: not m.pinned)
         except:
             pass
+
+
+    async def add_all_reactions(self, msg, reactions):
+        for reaction in reactions:
+            try:
+                await msg.add_reaction(reaction)
+            except:
+                pass
