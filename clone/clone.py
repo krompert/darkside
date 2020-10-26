@@ -36,7 +36,7 @@ class RoleCloner(commands.Cog):
 
 
     @checks.has_permissions(administrator=True)
-    @commands.command(aliases=["dr", "deleter"])
+    @commands.command(aliases=["dr", "roledeleter"])
     async def deleterole(self, ctx, role: discord.Role):
         """Delete a role."""
         try:
