@@ -1,13 +1,23 @@
 import discord
-from redbot.core import commands
+from redbot.core import commands, Config, checks
 from redbot.core.bot import Red
-from redbot.core import checks
 import re
+import datetime
+import asyncio
 
 class PurgeMessages(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
+        self.data = Config.get_conf(self, identifier=257252395298520, force_registration=True)
+        default_guild = {
+            "channels": {}
+        }
+        self.data.register_guild(**default_guild)
+        self.loop = bot.loop.create_task(self._purge_loop())
 
+    def cog_unload(self):
+        self.loop.cancel()
+         
     @commands.guild_only()
     @checks.mod_or_permissions(administrator=True)
     @commands.group()
@@ -113,7 +123,7 @@ class PurgeMessages(commands.Cog):
         """Delete server invites posted in the channel."""
 
         def msg_check(m):
-            reinvite = re.compile("(?:[\s \S]|)*(?:https?://)?(?:www.)?(?:discord.gg|(?:canary.)?discordapp.com/invite)/((?:[a-zA-Z0-9]){2,32})(?:[\s \S]|)*", re.IGNORECASE)
+            reinvite = re.compile("(?:[\s \S]|)*(?:https?:\/\/)?(?:www.)?(?:discord.gg|(?:canary.)?discordapp.com\/invite)\/((?:[a-zA-Z0-9]){2,32})(?:[\s \S]|)*", re.IGNORECASE)
             if reinvite.match(m.content) and not m.pinned:
                 return True
             return False
@@ -234,3 +244,130 @@ class PurgeMessages(commands.Cog):
             return await ctx.send("Unable to delete the messages older than 14 days.")
 
         await ctx.send(f"Successfully deleted **{len(msgs)}** messages sent users with the role **{role.name}**!")
+
+    @purge.command(name="timer")
+    async def _timer(self, ctx, channel: discord.TextChannel, time: str,*, msg: str):
+        """Set a purge timer, along the channel and a message."""
+        if time == "0":
+            if str(channel.id) in await self.data.guild(ctx.guild).channels():
+                await self.data.guild(ctx.guild).channels.clear_raw(channel.id)
+                return await ctx.send(f"Removed auto purge for {channel.mention}.")
+            else:
+                return await ctx.send("That channel doesn't exist in the data.")
+
+        time_conversion, time_text = self.time_str(time, True)
+        await self.data.guild(ctx.guild).channels.set_raw(channel.id, value={"time": time_conversion, "msg": msg, "last_purged": datetime.datetime.utcnow().timestamp()})
+        await ctx.send(f"Bot will now purge {channel.mention} every **{time_text}** and a message will be sent after the purge is completed.")
+
+    @purge.command(name="list")
+    async def _list(self, ctx):
+        """Lists of the active loops."""
+        loops = await self.data.guild(ctx.guild).channels()
+        if not loops:
+            return await ctx.send("Auto Purge is not running in any channels.")
+
+        channels = [ctx.guild.get_channel(int(x)).mention for x in loops if ctx.guild.get_channel(int(x))]
+        msg = ", ".join(channels)
+        embed=discord.Embed(color=ctx.author.color, description=msg, title="Auto Purge is active in the following channels")
+        await ctx.send(embed=embed)
+    
+    async def _purge_loop(self): 
+        while True:
+            await asyncio.sleep(3)
+            data = await self.data.all_guilds()
+            if data:
+                for guild_id in data:
+                    guild = self.bot.get_guild(guild_id)
+                    if not guild:
+                        continue
+                    
+                    guild_data = await self.data.guild(guild).channels()
+                    
+                    for channel_id in guild_data:
+                        channel = guild.get_channel(int(channel_id))
+                        if not channel:
+                            await self.data.guild(guild).channels.clear_raw(channel_id)
+                            continue
+                        
+                        time_left = guild_data[channel_id]['last_purged'] + guild_data[channel_id]['time']
+                        if time_left < datetime.datetime.utcnow().timestamp():
+                            messages = []
+                            async for m in channel.history(limit=2000):
+                                if not m.pinned:
+                                    messages.append(m)
+
+                            while messages:
+                                try:
+                                    await channel.delete_messages(messages[:100])
+                                except discord.errors.HTTPException:
+                                    pass
+                                
+                                messages = messages[100:]
+                                await asyncio.sleep(1.5)
+                                
+                            try:
+                                await channel.send(guild_data[channel_id]['msg'])
+                            except discord.errors.HTTPException:
+                                pass
+                            
+                            await self.data.guild(guild).channels.set_raw(channel.id, "last_purged", value=datetime.datetime.utcnow().timestamp())
+                    
+    def time_str(self, text, short=False):
+        data = []
+        t = 0
+        t_str = ""
+        reg = r"([0-9]+)(?: )?([ywdhms])+"
+        if isinstance(text, str):
+            data = re.findall(reg, text, re.IGNORECASE)
+        if isinstance(text, int) or isinstance(text, float):
+            t = text
+        for d in data:
+            if d[1].lower() == "y":
+                t += 604800 * 4.3482 * 12 * int(d[0])
+            if d[1] == "M":
+                t += 604800 * 4.3482 * int(d[0])
+            if d[1].lower() == "w":
+                t += 604800 * int(d[0])
+            if d[1].lower() == "d":
+                t += 86400 * int(d[0])
+            if d[1].lower() == "h":
+                t += 3600 * int(d[0])
+            if d[1] == "m":
+                t += 60 * int(d[0])
+            if d[1].lower() == "s":
+                t += int(d[0])
+        y, s = divmod(t, 604800 * 4.3482 * 12)
+        M, s = divmod(s, 604800 * 4.3482)
+        w, s = divmod(s, 604800)
+        d, s = divmod(s, 86400)
+        h, s = divmod(s, 3600)
+        m, s = divmod(s, 60)
+        y = int(y)
+        M = int(M)
+        w = int(w)
+        d = int(d)
+        h = int(h)
+        m = int(m)
+        s = int(s)
+        if y >= 1:
+            t_str += f"{y}y" if short else f"{y} year"
+            t_str += "s " if not short and y != 1 else " "
+        if M >= 1:
+            t_str += f"{M}M" if short else f"{M} month"
+            t_str += "s " if not short and M != 1 else " "
+        if w >= 1:
+            t_str += f"{w}w" if short else f"{w} week"
+            t_str += "s " if not short and w != 1 else " "
+        if d >= 1:
+            t_str += f"{d}d" if short else f"{d} day"
+            t_str += "s " if not short and d != 1 else " "
+        if h >= 1:
+            t_str += f"{h}h" if short else f"{h} hour"
+            t_str += "s " if not short and h != 1 else " "
+        if m >= 1:
+            t_str += f"{m}m" if short else f"{m} minute"
+            t_str += "s " if not short and m != 1 else " "
+        if s >= 1:
+            t_str += f"{s}s" if short else f"{s} second"
+            t_str += "s " if not short and s != 1 else " "
+        return t, t_str
