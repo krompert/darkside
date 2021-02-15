@@ -397,6 +397,10 @@ msgid "yiff"
 msgstr "yiff"
 
 #: nsfw.py:346
-msgid "cstars"
-msgstr "cstars"
+#, docstring
+msgid "Show some celebs images from random subreddits."
+msgstr "Toon enkele celebs afbeeldingen van willekeurige subreddits."
 
+#: nsfw.py:348
+msgid "celebs"
+msgstr "celebs"
