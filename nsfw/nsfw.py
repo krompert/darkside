@@ -434,8 +434,8 @@ class Nsfw(Core):
     @nsfwcheck()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 0.5, commands.BucketType.user)
-    @commands.command(aliases=["celebs"])
-    async def celebs(self, ctx: commands.Context):
+    @commands.command(aliases=["celebss"])
+    async def celebss(self, ctx: commands.Context):
         """Show some Celebrities images from random subreddits."""
 
-        await self._send_msg(ctx, _("celebs"), sub=sub.CELEBS)
+        await self._send_msg(ctx, _("celebs"), sub=sub.CELEBSS)
