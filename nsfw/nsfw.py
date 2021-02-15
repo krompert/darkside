@@ -438,4 +438,4 @@ class Nsfw(Core):
     async def cstars(self, ctx: commands.Context):
         """Show some Celebrities images from random subreddits."""
 
-        await self._send_msg(ctx, _("celebs"), sub=sub.CSTARS)
+        await self._send_msg(ctx, _("cstars"), sub=sub.CSTARS)
