@@ -199,12 +199,8 @@ FEET = [
 ]
 FEMDOM = ["Femdom", "femdom", "FemdomHumiliation", "hentaifemdom"]
 FUTA = [
-    "FutanariHentai",
-    "FutanariPegging",
-    "HorsecockFuta",
-    "Rule34_Futanari",
-    "hugefutanari",
-    "Futadomworld",
+    "NudeCelebsOnly",
+    "celebnsfw",
 ]
 GAY_P = [
     "gayporn",
