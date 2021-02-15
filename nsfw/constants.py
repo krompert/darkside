@@ -415,7 +415,7 @@ WILD = [
     "librarygirls",
 ]
 YIFF = ["Yiffbondage", "Hyiff", "femyiff", "yiff", "yiffgif"]
-CELEBS = ["celebnsfw"]
+CELEBSS = ["celebnsfw"]
 
 # Other APIs
 NEKOBOT_HENTAI = choice(["hentai_anal", "hentai"])
