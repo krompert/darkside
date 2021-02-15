@@ -402,5 +402,5 @@ msgid "Show some celebs images from random subreddits."
 msgstr "Toon enkele celebs afbeeldingen van willekeurige subreddits."
 
 #: nsfw.py:364
-msgid "celebs"
-msgstr "celebs"
+msgid "nudecelebs"
+msgstr "nudecelebs"
