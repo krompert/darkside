@@ -431,7 +431,7 @@ class Nsfw(Core):
 
         await self._send_msg(ctx, _("yiff"), sub=sub.YIFF)
 		
-		@nsfwcheck()
+    @nsfwcheck()
     @commands.bot_has_permissions(embed_links=True)
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.command(aliases=["celebs"])
