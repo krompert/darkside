@@ -201,6 +201,7 @@ FEMDOM = ["Femdom", "femdom", "FemdomHumiliation", "hentaifemdom"]
 FUTA = [
     "NudeCelebsOnly",
     "celebnsfw",
+    "celebsnaked",
 ]
 GAY_P = [
     "gayporn",
