@@ -397,6 +397,6 @@ msgid "yiff"
 msgstr "yiff"
 
 #: nsfw.py:346
-msgid "celebs"
-msgstr "celebs"
+msgid "celebss"
+msgstr "celebss"
 
