@@ -13,10 +13,10 @@ class Burn(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.data = Config.get_conf(self, identifier=20190511001, force_registration=True)
-        default_guild = {
+        default = {
             "insults": {}
         }
-        self.data.register_guild(**default_guild)
+        self.data.register_global(**default)
 
     @commands.group(invoke_without_command=True, aliases=["burns"])
     async def burn(self, ctx, user: typing.Optional[discord.Member]):
@@ -31,7 +31,7 @@ class Burn(commands.Cog):
         if not ctx.invoked_subcommand:
             if not user:
                 return
-            insults = await self.data.guild(ctx.guild).insults()
+            insults = await self.data.insults()
             if not insults:
                 return await ctx.send("No insults were added.")
             insult = insults[random.choice(list(insults.keys()))]
@@ -40,7 +40,7 @@ class Burn(commands.Cog):
     @checks.admin_or_permissions(administrator=True)    
     @burn.command()
     async def add(self, ctx, *, insult):
-        insults = await self.data.guild(ctx.guild).insults()
+        insults = await self.data.insults()
         for insulti in insults:
             if insults[insulti] == insult:
                 return await ctx.send("That burn already exists.")
@@ -50,24 +50,24 @@ class Burn(commands.Cog):
                 break
             except:
                 pass
-        await self.data.guild(ctx.guild).insults.set(insults)
+        await self.data.insults.set(insults)
         await ctx.send(f"```{insult}``` **was added to the burns list.**")
 
     @checks.admin_or_permissions(administrator=True)
     @burn.command(aliases=["rem"])
     async def remove(self, ctx, *, insult_id: int):
-        insults = await self.data.guild(ctx.guild).insults()
+        insults = await self.data.insults()
         for insultid, insult in insults.items():
             if int(insultid) == insult_id:
                 del insults[insultid]
-                await self.data.guild(ctx.guild).insults.set(insults)
+                await self.data.insults.set(insults)
                 return await ctx.send(f"```{insult}``` **was removed from the burns list.**")
         await ctx.send("That burn doesn't exist.")
 
     @checks.admin_or_permissions(administrator=True)
     @burn.command(name="list")
     async def _list(self, ctx):
-        insults_list = await self.data.guild(ctx.guild).insults()
+        insults_list = await self.data.insults()
         if not insults_list:
             return await ctx.send("There are no burns.")
         insults = sorted(insults_list.items(), key=lambda x: int(x[0]))
