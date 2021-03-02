@@ -33,7 +33,7 @@ class Burn(commands.Cog):
             insults = await self.data.guild(ctx.guild).insults()
             if not insults:
                 return await ctx.send("No insults were added.")
-            insult = insults[random.choice(insults)]
+            insult = insults[random.choice(list(insults.keys()))]
             await ctx.send(f"{user.mention}, {insult}")
 
     @burn.command()
