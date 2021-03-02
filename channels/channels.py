@@ -27,6 +27,7 @@ class Channels(commands.Cog):
             await ctx.send("Missing permissions to create a channel.")
 
     @commands.command(name='deletechannel', aliases=['dc'])
+    @checks.mod_or_permissions(administrator=True)
     async def _deletechannels(self, ctx, channel: Optional[Union[discord.TextChannel, discord.VoiceChannel]]):
         """Delete a channel using the command."""
         try:
