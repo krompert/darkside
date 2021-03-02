@@ -86,7 +86,7 @@ class Rules(commands.Cog):
     async def _agree(self, ctx):
         "Get a role."
         msg = f"""{ctx.author.mention}
-                Please react with an emoji to gain access to the server and proper roles. Please tag @Leadership if you need any assistance.
+                Please react with the emoji for your Union to gain access to the server and proper roles. Please tag @Leaders if you need any assistance.
 
                 Only 18+ members should ever react to @Over18 ! This will give access to NSFW channels, if you are under 18, please refer yourself from reacting to this role!\n\n"""
         emojis_db = await self.data.guild(ctx.guild).roles()
