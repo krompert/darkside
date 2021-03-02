@@ -18,7 +18,6 @@ class Burn(commands.Cog):
         }
         self.data.register_guild(**default_guild)
 
-    @checks.admin_or_permissions(administrator=True)
     @commands.group(invoke_without_command=True, aliases=["burns"])
     async def burn(self, ctx, user: typing.Optional[discord.Member]):
         """Manage scheduled sticky messages.
@@ -30,12 +29,15 @@ class Burn(commands.Cog):
             [p]burn list
         """
         if not ctx.invoked_subcommand:
+            if not user:
+                return
             insults = await self.data.guild(ctx.guild).insults()
             if not insults:
                 return await ctx.send("No insults were added.")
             insult = insults[random.choice(list(insults.keys()))]
             await ctx.send(f"{user.mention}, {insult}")
 
+    @checks.admin_or_permissions(administrator=True)    
     @burn.command()
     async def add(self, ctx, *, insult):
         insults = await self.data.guild(ctx.guild).insults()
@@ -51,6 +53,7 @@ class Burn(commands.Cog):
         await self.data.guild(ctx.guild).insults.set(insults)
         await ctx.send(f"```{insult}``` **was added to the burns list.**")
 
+    @checks.admin_or_permissions(administrator=True)
     @burn.command(aliases=["rem"])
     async def remove(self, ctx, *, insult_id: int):
         insults = await self.data.guild(ctx.guild).insults()
@@ -61,16 +64,20 @@ class Burn(commands.Cog):
                 return await ctx.send(f"```{insult}``` **was removed from the burns list.**")
         await ctx.send("That burn doesn't exist.")
 
+    @checks.admin_or_permissions(administrator=True)
     @burn.command(name="list")
     async def _list(self, ctx):
-        insults = sorted((await self.data.guild(ctx.guild).insults()).items(), key=lambda x: int(x[0]))
+        insults_list = await self.data.guild(ctx.guild).insults()
+        if not insults_list:
+            return await ctx.send("There are no burns.")
+        insults = sorted(insults_list.items(), key=lambda x: int(x[0]))
         insults = self.chunks([f"{i[0]}. `{i[1]}`" for i in insults], 5)
         msg = None
         page_no = 0
         while True:
             e = discord.Embed(description="\n\n".join(insults[page_no]), color=ctx.author.color)
             e.set_author(name="Burns list" + f" [{page_no+1}/{len(insults)}]" if len(insults) > 1 else "", icon_url=ctx.guild.icon_url)
-            e.set_footer(text=ctx.author.name, icon_url=ctx.guild.avatar_url)
+            e.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar_url)
             if not msg:
                 msg = await ctx.send(embed=e)
                 if len(insults) > 1:
