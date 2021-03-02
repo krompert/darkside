@@ -278,4 +278,3 @@ class Rules(commands.Cog):
                             pass
                         
                 
-                
