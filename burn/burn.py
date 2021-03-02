@@ -31,7 +31,9 @@ class Burn(commands.Cog):
         """
         if not ctx.invoked_subcommand:
             insults = await self.data.guild(ctx.guild).insults()
-            insult = insults[random.choice(insults.keys())]
+            if not insults:
+                return await ctx.send("No insults were added.")
+            insult = insults[random.choice(insults)]
             await ctx.send(f"{user.mention}, {insult}")
 
     @burn.command()
@@ -61,7 +63,7 @@ class Burn(commands.Cog):
 
     @burn.command(name="list")
     async def _list(self, ctx):
-        insults = sorted(await self.data.guild(ctx.guild).insults().items(), key=lambda x: int(x[0]))
+        insults = sorted((await self.data.guild(ctx.guild).insults()).items(), key=lambda x: int(x[0]))
         insults = self.chunks([f"{i[0]}. `{i[1]}`" for i in insults], 5)
         msg = None
         page_no = 0
