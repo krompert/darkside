@@ -90,7 +90,7 @@ class Burn(commands.Cog):
             else:
                 await msg.edit(embed=e)
             try:
-                reaction = await self.bot.wait_for("reaction_add", check=check, timeout=90)[1]
+                reaction, user = await self.bot.wait_for("reaction_add", check=check, timeout=90)
             except Exception:
                 try:
                     await msg.clear_reactions()
@@ -99,12 +99,12 @@ class Burn(commands.Cog):
                 break
             if str(reaction.emoji) == "◀️":
                 page_no -= 1
-                if page_no < 1:
+                if page_no < 0:
                     page_no = len(insults) - 1
             if str(reaction.emoji) == "▶️":
                 page_no += 1
                 if page_no > len(insults) - 1:
-                    page_no = 1
+                    page_no = 0
             try:
                 await reaction.remove(ctx.author)
             except:
