@@ -9,7 +9,7 @@ class Channels(commands.Cog):
 
     @commands.guild_only()
     @checks.mod_or_permissions(administrator=True)
-    @commands.command(name="createchannel", aliases=['cc'])
+    @commands.command(name="createchannel", aliases=['cch'])
     async def _channels(self, ctx, channel: Optional[Union[discord.TextChannel, discord.VoiceChannel]], newChannelName: str, syncPermissions: bool=True):
         """Create a text channel while syncing the permissions from the previous channel."""
         try:
