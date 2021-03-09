@@ -83,18 +83,92 @@ class Giveaways(commands.Cog):
         """Giveaway System"""
 
     @giveaway.command(name="start")
-    async def _start(self, ctx, duration: str, winners: int, *, prize: str):
+    async def _start(self, ctx):
         """Start a giveaway."""
+        response = {
+            "roles_required": [],
+            "ended": False,
+            "channel": ctx.channel.id,
+            "creator": ctx.author.id,
+            "winners": 0
+        }
+        e = discord.Embed()
+        e.set_author(name="Giveaway Builder", icon_url=ctx.guild.icon_url)
+        e.description = "What are you giving away?"
+        msg = await ctx.send(embed=e)
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+        try:
+            res = await self.bot.wait_for("message", check=check, timeout=60)
+            response["prize"] = res.content
+        except asyncio.TimeoutError:
+            await self.delete_message(msg)
+            return await ctx.send("Timeout, you took too long to respond.")
+        e.add_field(name="Prize", value=response["prize"])
+        e.description = "How long should the giveaway last for?"
+        await msg.edit(embed=e)
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel and self.time_str(m.content)[0] > 0
+        try:
+            res = await self.bot.wait_for("message", check=check, timeout=60)
+            response["duration"] = duration = self.time_str(res.content)
+        except asyncio.TimeoutError:
+            await self.delete_message(msg)
+            return await ctx.send("Timeout, you took too long to respond.")
+        e.add_field(name="Duration", value=response["duration"][1])
+        e.description = "How many winners should there be?"
+        await msg.edit(embed=e)
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel and m.content.isdigit() and int(m.content) > 0
+        try:
+            res = await self.bot.wait_for("message", check=check, timeout=60)
+            response["winners"] = int(res.content)
+        except asyncio.TimeoutError:
+            await self.delete_message(msg)
+            return await ctx.send("Timeout, you took too long to respond.")
+        e.add_field(name="Winners", value=response["winners"])
+        e.description = "Would you like to limit this giveaway to specific roles?\nRespond with role ids, names or mentions or just `no`"
+        await msg.edit(embed=e)
+        async def check(m):
+            if m.content.lower() != "no":
+                try:
+                    roles = [await commands.RoleConverter().convert(ctx=ctx, argument=arg) for arg in m.content.split(" ")]
+                except:
+                    return False
+            return m.author == ctx.author and m.channel == ctx.channel
+        try:
+            res = await self.bot.wait_for("message", check=check, timeout=60)
+            response["roles_required"] = [(await commands.RoleConverter().convert(ctx=ctx, argument=arg)).id for arg in res.content.split(" ")] if res.content.lower() != "no" else []
+            roles = [f"<@&{_id}>" for _id in response["roles_required"] if ctx.guild.get_role(_id)]
+        except asyncio.TimeoutError:
+            await self.delete_message(msg)
+            return await ctx.send("Timeout, you took too long to respond.")
+        if roles:
+            e.add_field(name="Roles", value=",".join(roles))
+        e.description = ""
+        await msg.edit(embed=e)
+
+        response.update({
+            "created_at": datetime.datetime.utcnow().timestamp(),
+            "ends_on": datetime.datetime.utcnow().timestamp() + response["duration"][0],
+            "duration": response["duration"][1]
+        })
+
         data = await self.data.guild(ctx.guild).giveaways()
-        duration = self.time_str(duration)
-        if duration[1] == "":
-            return await ctx.send("Invalid duration provided, make sure the format is similar to: `1w4d3h2s`.")
         
-        embed=discord.Embed(description=f"Giveaway ends in: **{duration[1]}**\nWinners: **{winners}**\nHosted By: {ctx.author.mention}\n\n**React with :tada: to enter!**", title=f"{prize.upper()}")
+        embed=discord.Embed(description=f"Giveaway ends in: **{duration[1]}**\nWinners: **{response['winners']}**\nHosted By: {ctx.author.mention}\n\n**React with 🎟️ to enter!**", title=f"{response['prize'].upper()}")
+        if response["roles_required"]:
+            embed.add_field(name="Roles Required", value=",".join(roles))
         message = await ctx.send(embed=embed)
-        await self.data.guild(ctx.guild).giveaways.set_raw(message.id, value={"roles_required": [], "ended": False, "prize": prize, "channel": message.channel.id, "created_at": datetime.datetime.utcnow().timestamp(), "creator": ctx.author.id, "winners": winners, "ends_on": datetime.datetime.utcnow().timestamp() + duration[0], "duration": duration[1]})
-        await message.add_reaction("🎉")
-    
+        await self.data.guild(ctx.guild).giveaways.set_raw(message.id, value=response)
+        await message.add_reaction("🎟️")
+
+    async def delete_message(self, msg):
+        try:
+            await msg.delete()
+        except:
+            return 
+
     @giveaway.command(name="end")
     async def _end(self, ctx, messageID: int):
         """End a giveaway."""
@@ -110,11 +184,10 @@ class Giveaways(commands.Cog):
         for i in range(data['winners']):
             winner = await self.end_giveaway(messageID, data)
             winners.append(winner.mention)
-
         winners = await self.winners_message(winners)
         await self.embed_msg(messageID, data, winners)
         await self.data.guild(ctx.guild).giveaways.set_raw(messageID, "ended", value=True)
-        await ctx.send(f"Ended the giveawawy with the message id: `{messageID}`")
+        await ctx.send(f"Ended the giveaway with the message id: `{messageID}`")
 
     @giveaway.command(name="reroll")
     async def _reroll(self, ctx, messageID: int):
@@ -128,7 +201,7 @@ class Giveaways(commands.Cog):
             return await ctx.send("This giveaway hasn't ended yet.")
 
         winner = await self.end_giveaway(messageID, data)
-        await ctx.send(f":tada: The new winner is {winner.mention}! Congratulations!")
+        await ctx.send(f"🎟️ The new winner is {winner.mention}! Congratulations!")
 
     async def winners_message(self, winners):
         message = "**Winner:** No one entered the giveaway."
@@ -236,9 +309,9 @@ class Giveaways(commands.Cog):
         content = None
         if winners:
             embed=discord.Embed(description=f"{winners}\n**Host:** {host}", title=data['prize'].upper(), timestamp=datetime.datetime.utcnow()).set_footer(text="Ended at")
-            content = f":tada: Congratulations {winners.replace('**Winner:**', '')}! You have won the {data['prize'].upper()} giveaway!"
+            content = f"🎟️ Congratulations {winners.replace('**Winner:**', '')}!" + f" You have won the **{data['prize'].upper()}** giveaway!" if winners != "**Winner:** No one entered the giveaway." else ""
         else:
-            embed=discord.Embed(description=f"Giveaway ends in: **{time_left[1]}**\nWinners: **{data['winners']}**\nHosted By: {host}\n\n**React with :tada: to enter!**", title=data['prize'].upper())
+            embed=discord.Embed(description=f"Giveaway ends in: **{time_left[1]}**\nWinners: **{data['winners']}**\nHosted By: {host}\n\n**React with 🎟️ to enter!**", title=data['prize'].upper())
             if roles:
                 embed.add_field(name="Roles Required", value=",".join(roles))
 
@@ -260,7 +333,7 @@ class Giveaways(commands.Cog):
         if channel:
             message = await channel.fetch_message(messageID)
             if message:
-                reaction = [x for x in message.reactions if x.emoji == "🎉"][0]
+                reaction = [x for x in message.reactions if x.emoji == "🎟️"][0]
                 winners = [x for x in await reaction.users().flatten() if x != self.bot.user]
                 if not winners:
                     return None
@@ -268,7 +341,6 @@ class Giveaways(commands.Cog):
                 winner = random.choice(winners)
 
                 return winner
-
 
     def time_str(self, text, short=False):
         data = []
