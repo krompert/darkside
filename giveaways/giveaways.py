@@ -28,7 +28,7 @@ class Giveaways(commands.Cog):
                     guild = self.bot.get_guild(int(guild_id))
                     if not guild:
                         continue
-                    
+
                     data = await self.data.guild(guild).giveaways()
                     for giveaway_id in data:
                         giveaway = await self.data.guild(guild).giveaways.get_raw(giveaway_id)
@@ -44,7 +44,7 @@ class Giveaways(commands.Cog):
                                 await self.data.guild(guild).giveaways.set_raw(giveaway_id, "ended", value=True)
                             else:
                                 await self.embed_msg(giveaway_id, await self.data.guild(guild).giveaways.get_raw(giveaway_id))
-            
+
             await asyncio.sleep(60)
 
     @commands.Cog.listener()
@@ -53,7 +53,7 @@ class Giveaways(commands.Cog):
         channel = await self.bot.fetch_channel(payload.channel_id)
         user = await guild.fetch_member(payload.user_id)
         message = await channel.fetch_message(payload.message_id)
-        
+
         if user.bot:
             return
 
@@ -71,7 +71,7 @@ class Giveaways(commands.Cog):
                     except:
                         pass
                     return
-            
+
             roles= [x.name for x in roles]
             await user.send(f"You must have either one of these roles be a part of the giveaway: **{','.join(roles)}**")
             await message.remove_reaction(payload.emoji, user)
@@ -155,8 +155,9 @@ class Giveaways(commands.Cog):
         })
 
         data = await self.data.guild(ctx.guild).giveaways()
-        
+
         embed=discord.Embed(description=f"Giveaway ends in: **{duration[1]}**\nWinners: **{response['winners']}**\nHosted By: {ctx.author.mention}\n\n**React with 🎟️ to enter!**", title=f"{response['prize'].upper()}")
+        embed.set_image(url="http://darkh4cks.wtf/giveaway.gif")
         if response["roles_required"]:
             embed.add_field(name="Roles Required", value=",".join(roles))
         message = await ctx.send(embed=embed)
@@ -167,7 +168,7 @@ class Giveaways(commands.Cog):
         try:
             await msg.delete()
         except:
-            return 
+            return
 
     @giveaway.command(name="end")
     async def _end(self, ctx, messageID: int):
@@ -175,7 +176,7 @@ class Giveaways(commands.Cog):
         data = await self.data.guild(ctx.guild).giveaways()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No giveaway was found with the message id: `{messageID}`")
-        
+
         data = await self.data.guild(ctx.guild).giveaways.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This giveaway was ended.")
@@ -195,7 +196,7 @@ class Giveaways(commands.Cog):
         data = await self.data.guild(ctx.guild).giveaways()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No giveaway was found with the message id: `{messageID}`")
-        
+
         data = await self.data.guild(ctx.guild).giveaways.get_raw(messageID)
         if not data['ended']:
             return await ctx.send("This giveaway hasn't ended yet.")
@@ -225,7 +226,7 @@ class Giveaways(commands.Cog):
         data = await self.data.guild(ctx.guild).giveaways()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No giveaway was found with the message id: `{messageID}`")
-        
+
         data = await self.data.guild(ctx.guild).giveaways.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This giveaway was ended.")
@@ -233,7 +234,7 @@ class Giveaways(commands.Cog):
         roles = data['roles_required']
         if role.id not in roles:
             return await ctx.send("The role doesn't exist in the list.")
-        
+
         roles.remove(role.id)
         await self.data.guild(ctx.guild).giveaways.set_raw(messageID, "roles_required", value=roles)
         roles = [ctx.guild.get_role(role).mention for role in roles if ctx.guild.get_role(role)]
@@ -247,7 +248,7 @@ class Giveaways(commands.Cog):
         data = await self.data.guild(ctx.guild).giveaways()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No giveaway was found with the message id: `{messageID}`")
-        
+
         data = await self.data.guild(ctx.guild).giveaways.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This giveaway was ended.")
@@ -255,20 +256,20 @@ class Giveaways(commands.Cog):
         roles = data['roles_required']
         if role.id in roles:
             return await ctx.send("This already exists in the list.")
-        
+
         roles.append(role.id)
         await self.data.guild(ctx.guild).giveaways.set_raw(messageID, "roles_required", value=roles)
         roles = [ctx.guild.get_role(role).mention for role in roles if ctx.guild.get_role(role)]
         await self.embed_msg(messageID, data, None, roles)
         await ctx.send(f"Users with {role.name} will now be allowed to enter the giveaway.")
-        
+
     @_role.command(name="list")
     async def _list(self, ctx, messageID):
         """List all the allowed roles for a giveaway."""
         data = await self.data.guild(ctx.guild).giveaways()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No giveaway was found with the message id: `{messageID}`")
-        
+
         data = await self.data.guild(ctx.guild).giveaways.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This giveaway was ended.")
@@ -290,7 +291,7 @@ class Giveaways(commands.Cog):
         data = await self.data.guild(ctx.guild).giveaways()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No giveaway was found with the message id: `{messageID}`")
-        
+
         data = await self.data.guild(ctx.guild).giveaways.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This giveaway was ended.")
@@ -325,7 +326,7 @@ class Giveaways(commands.Cog):
                     return await message.edit(embed=embed)
                 except:
                     return None
-        
+
         return None
 
     async def end_giveaway(self, messageID, data):
@@ -337,7 +338,7 @@ class Giveaways(commands.Cog):
                 winners = [x for x in await reaction.users().flatten() if x != self.bot.user]
                 if not winners:
                     return None
-                
+
                 winner = random.choice(winners)
 
                 return winner
