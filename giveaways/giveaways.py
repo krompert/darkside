@@ -157,7 +157,7 @@ class Giveaways(commands.Cog):
         data = await self.data.guild(ctx.guild).giveaways()
 
         embed=discord.Embed(description=f"Giveaway ends in: **{duration[1]}**\nWinners: **{response['winners']}**\nHosted By: {ctx.author.mention}\n\n**React with 🎟️ to enter!**", title=f"{response['prize'].upper()}")
-        embed.set_image(url="http://darkh4cks.wtf/giveaway.gif")
+        embed.set_image(url="https://cdn.discordapp.com/attachments/694962488352964720/818885190520406026/giveaway.gif")
         if response["roles_required"]:
             embed.add_field(name="Roles Required", value=",".join(roles))
         message = await ctx.send(embed=embed)
@@ -326,6 +326,13 @@ class Giveaways(commands.Cog):
                     return await message.edit(embed=embed)
                 except:
                     return None
+        if winners:
+            for winner in winners:
+                try:
+                    await winner.send(f" You have won the **{data['prize'].upper()}** giveaway!")
+                except:
+                    pass
+
 
         return None
 
