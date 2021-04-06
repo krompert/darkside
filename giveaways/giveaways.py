@@ -12,7 +12,9 @@ class Giveaways(commands.Cog):
         self.data = Config.get_conf(self, identifier=934693420623, force_registration=True)
 
         default_guild = {
-            "giveaways": {}
+            "giveaways": {},
+            "giveawayRole": None,
+            "logchannel": None,
         }
         self.data.register_guild(**default_guild)
         self.loop = bot.loop.create_task(self.giveaway_loop())
@@ -370,6 +372,34 @@ class Giveaways(commands.Cog):
                         break
 
                 return winner
+
+    @commands.guild_only()
+    @checks.mod_or_permissions(administrator=True)
+    @commands.group()
+    async def giveawaywinner(self, ctx):
+        """Setup autorole for giveaway winners and the giveaway channel."""
+        if ctx.invoked_subcommand is None:
+            pass
+
+    @giveawaywinner.command(name="role")
+    async def ___role(self, ctx, role: discord.Role=None):
+        """Setup autorole for giveaway winner."""
+        if not role:
+            await self.data.guild(ctx.guild).giveawayRole.set(None)
+            await ctx.send("Giveaway role has been reset!")
+        if role:
+            await self.data.guild(ctx.guild).giveawayRole.set(role.id)
+            await ctx.send(f"Giveaway role has been set to **{role.name}**!")
+
+    @giveawaywinner.command(name="logchannel")
+    async def _logchannel(self, ctx, channel: discord.TextChannel=None):
+        """Setup a log channel where a message is sent when user is assigned a role."""
+        if not channel:
+            await self.data.guild(ctx.guild).logchannel.set(None)
+            await ctx.send("Log channel has been reset!")
+        if channel:
+            await self.data.guild(ctx.guild).logchannel.set(channel.id)
+            await ctx.send(f"Log channel has been set to **{channel.mention}**!")
 
     def time_str(self, text, short=False):
         data = []
