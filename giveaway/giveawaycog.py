@@ -6,16 +6,13 @@ import datetime
 import random
 import asyncio
 
-class GiveawayCog(commands.Cog):
+class Giveaways(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
-        self.data = Config.get_conf(self, identifier=235252323333215, force_registration=True)
+        self.data = Config.get_conf(self, identifier=934693420623, force_registration=True)
 
         default_guild = {
-            "giveaways": {},
-            "giveawayChannel": None,
-            "giveawayRole": None,
-            "logchannel": None,
+            "giveaways": {}
         }
         self.data.register_guild(**default_guild)
         self.loop = bot.loop.create_task(self.giveaway_loop())
@@ -31,7 +28,7 @@ class GiveawayCog(commands.Cog):
                     guild = self.bot.get_guild(int(guild_id))
                     if not guild:
                         continue
-
+                    
                     data = await self.data.guild(guild).giveaways()
                     for giveaway_id in data:
                         giveaway = await self.data.guild(guild).giveaways.get_raw(giveaway_id)
@@ -39,43 +36,16 @@ class GiveawayCog(commands.Cog):
                             if datetime.datetime.utcnow().timestamp() >= giveaway["ends_on"]:
                                 winners = []
                                 for i in range(giveaway['winners']):
-                                    winner = await self.end_giveaway(giveaway_id, giveaway)
+                                    winner = await self.end_giveaway(giveaway_id, giveaway, winners)
                                     if winner:
                                         winners.append(winner.mention)
                                 winners = await self.winners_message(winners)
                                 await self.embed_msg(giveaway_id, giveaway, winners)
-                                await self._add_roles(guild, winners)
                                 await self.data.guild(guild).giveaways.set_raw(giveaway_id, "ended", value=True)
                             else:
                                 await self.embed_msg(giveaway_id, await self.data.guild(guild).giveaways.get_raw(giveaway_id))
-
+            
             await asyncio.sleep(60)
-
-    async def _add_roles(self, guild, winners):
-        role = await self.data.guild(guild).giveawayRole()
-        log_channel = await self.data.guild(guild).logchannel()
-
-        if not role:
-            return
-
-        role = guild.get_role(int(role))
-        if log_channel:
-            log_channel = guild.get_channel(int(log_channel))
-
-        if not role:
-            return
-
-        winners = [guild.get_member(int(x)) for x in re.findall(r'<@!?([0-9]+)>', winners)]
-        for winner in winners:
-            try:
-                await winner.add_roles(role)
-                if log_channel:
-                    await log_channel.send(f"{winner.mention} was assigned with **{role.name}** role for winning a giveaway.")
-            except:
-                pass
-
-
-
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -83,7 +53,7 @@ class GiveawayCog(commands.Cog):
         channel = await self.bot.fetch_channel(payload.channel_id)
         user = await guild.fetch_member(payload.user_id)
         message = await channel.fetch_message(payload.message_id)
-
+        
         if user.bot:
             return
 
@@ -101,7 +71,7 @@ class GiveawayCog(commands.Cog):
                     except:
                         pass
                     return
-
+            
             roles= [x.name for x in roles]
             await user.send(f"You must have either one of these roles be a part of the giveaway: **{','.join(roles)}**")
             await message.remove_reaction(payload.emoji, user)
@@ -185,9 +155,8 @@ class GiveawayCog(commands.Cog):
         })
 
         data = await self.data.guild(ctx.guild).giveaways()
-
+        
         embed=discord.Embed(description=f"Giveaway ends in: **{duration[1]}**\nWinners: **{response['winners']}**\nHosted By: {ctx.author.mention}\n\n**React with 🎟️ to enter!**", title=f"{response['prize'].upper()}")
-        embed.set_image(url="https://cdn.discordapp.com/attachments/694962488352964720/818885190520406026/giveaway.gif")
         if response["roles_required"]:
             embed.add_field(name="Roles Required", value=",".join(roles))
         message = await ctx.send(embed=embed)
@@ -198,7 +167,7 @@ class GiveawayCog(commands.Cog):
         try:
             await msg.delete()
         except:
-            return
+            return 
 
     @giveaway.command(name="end")
     async def _end(self, ctx, messageID: int):
@@ -206,14 +175,14 @@ class GiveawayCog(commands.Cog):
         data = await self.data.guild(ctx.guild).giveaways()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No giveaway was found with the message id: `{messageID}`")
-
+        
         data = await self.data.guild(ctx.guild).giveaways.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This giveaway was ended.")
 
         winners = []
         for i in range(data['winners']):
-            winner = await self.end_giveaway(messageID, data)
+            winner = await self.end_giveaway(messageID, data, winners)
             winners.append(winner.mention)
         winners = await self.winners_message(winners)
         await self.embed_msg(messageID, data, winners)
@@ -226,12 +195,12 @@ class GiveawayCog(commands.Cog):
         data = await self.data.guild(ctx.guild).giveaways()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No giveaway was found with the message id: `{messageID}`")
-
+        
         data = await self.data.guild(ctx.guild).giveaways.get_raw(messageID)
         if not data['ended']:
             return await ctx.send("This giveaway hasn't ended yet.")
 
-        winner = await self.end_giveaway(messageID, data)
+        winner = await self.end_giveaway(messageID, data, winners)
         await ctx.send(f"🎟️ The new winner is {winner.mention}! Congratulations!")
 
     async def winners_message(self, winners):
@@ -256,7 +225,7 @@ class GiveawayCog(commands.Cog):
         data = await self.data.guild(ctx.guild).giveaways()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No giveaway was found with the message id: `{messageID}`")
-
+        
         data = await self.data.guild(ctx.guild).giveaways.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This giveaway was ended.")
@@ -264,7 +233,7 @@ class GiveawayCog(commands.Cog):
         roles = data['roles_required']
         if role.id not in roles:
             return await ctx.send("The role doesn't exist in the list.")
-
+        
         roles.remove(role.id)
         await self.data.guild(ctx.guild).giveaways.set_raw(messageID, "roles_required", value=roles)
         roles = [ctx.guild.get_role(role).mention for role in roles if ctx.guild.get_role(role)]
@@ -278,7 +247,7 @@ class GiveawayCog(commands.Cog):
         data = await self.data.guild(ctx.guild).giveaways()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No giveaway was found with the message id: `{messageID}`")
-
+        
         data = await self.data.guild(ctx.guild).giveaways.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This giveaway was ended.")
@@ -286,20 +255,20 @@ class GiveawayCog(commands.Cog):
         roles = data['roles_required']
         if role.id in roles:
             return await ctx.send("This already exists in the list.")
-
+        
         roles.append(role.id)
         await self.data.guild(ctx.guild).giveaways.set_raw(messageID, "roles_required", value=roles)
         roles = [ctx.guild.get_role(role).mention for role in roles if ctx.guild.get_role(role)]
         await self.embed_msg(messageID, data, None, roles)
         await ctx.send(f"Users with {role.name} will now be allowed to enter the giveaway.")
-
+        
     @_role.command(name="list")
     async def _list(self, ctx, messageID):
         """List all the allowed roles for a giveaway."""
         data = await self.data.guild(ctx.guild).giveaways()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No giveaway was found with the message id: `{messageID}`")
-
+        
         data = await self.data.guild(ctx.guild).giveaways.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This giveaway was ended.")
@@ -321,7 +290,7 @@ class GiveawayCog(commands.Cog):
         data = await self.data.guild(ctx.guild).giveaways()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No giveaway was found with the message id: `{messageID}`")
-
+        
         data = await self.data.guild(ctx.guild).giveaways.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This giveaway was ended.")
@@ -343,7 +312,6 @@ class GiveawayCog(commands.Cog):
             content = f"🎟️ Congratulations {winners.replace('**Winner:**', '')}!" + f" You have won the **{data['prize'].upper()}** giveaway!" if winners != "**Winner:** No one entered the giveaway." else ""
         else:
             embed=discord.Embed(description=f"Giveaway ends in: **{time_left[1]}**\nWinners: **{data['winners']}**\nHosted By: {host}\n\n**React with 🎟️ to enter!**", title=data['prize'].upper())
-            embed.set_image(url="https://cdn.discordapp.com/attachments/694962488352964720/818885190520406026/giveaway.gif")
             if roles:
                 embed.add_field(name="Roles Required", value=",".join(roles))
 
@@ -354,17 +322,13 @@ class GiveawayCog(commands.Cog):
                 try:
                     if content:
                         await channel.send(content)
-                        winners = [channel.guild.get_member(int(x)) for x in re.findall(r'<@!?([0-9]+)>', winners)]
-                        for winner in winners:
-                            await winner.send(f" You have won the **{data['prize'].upper()}** giveaway!")
                     return await message.edit(embed=embed)
                 except:
                     return None
-
-
+        
         return None
 
-    async def end_giveaway(self, messageID, data):
+    async def end_giveaway(self, messageID, data, intialwinners):
         channel = self.bot.get_channel(data['channel'])
         if channel:
             message = await channel.fetch_message(messageID)
@@ -373,39 +337,13 @@ class GiveawayCog(commands.Cog):
                 winners = [x for x in await reaction.users().flatten() if x != self.bot.user]
                 if not winners:
                     return None
-
-                winner = random.choice(winners)
-                await message.remove_reaction(reaction, winner)
+                
+                while True:
+                    winner = random.choice(winners)
+                    if winner.mention not in intialwinners:
+                        break
 
                 return winner
-
-    @commands.guild_only()
-    @checks.mod_or_permissions(administrator=True)
-    @commands.group()
-    async def giveawaywinner(self, ctx):
-        """Setup autorole for giveaway winners and the giveaway channel."""
-        if ctx.invoked_subcommand is None:
-            pass
-
-    @giveawaywinner.command(name="role")
-    async def ___role(self, ctx, role: discord.Role=None):
-        """Setup autorole for giveaway winner."""
-        if not role:
-            await self.data.guild(ctx.guild).giveawayRole.set(None)
-            await ctx.send("Giveaway role has been reset!")
-        if role:
-            await self.data.guild(ctx.guild).giveawayRole.set(role.id)
-            await ctx.send(f"Giveaway role has been set to **{role.name}**!")
-
-    @giveawaywinner.command(name="logchannel")
-    async def _logchannel(self, ctx, channel: discord.TextChannel=None):
-        """Setup a log channel where a message is sent when user is assigned a role."""
-        if not channel:
-            await self.data.guild(ctx.guild).logchannel.set(None)
-            await ctx.send("Log channel has been reset!")
-        if channel:
-            await self.data.guild(ctx.guild).logchannel.set(channel.id)
-            await ctx.send(f"Log channel has been set to **{channel.mention}**!")
 
     def time_str(self, text, short=False):
         data = []
