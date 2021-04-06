@@ -41,11 +41,35 @@ class Giveaways(commands.Cog):
                                         winners.append(winner.mention)
                                 winners = await self.winners_message(winners)
                                 await self.embed_msg(giveaway_id, giveaway, winners)
+                                await self._add_roles(guild, winners)
                                 await self.data.guild(guild).giveaways.set_raw(giveaway_id, "ended", value=True)
                             else:
                                 await self.embed_msg(giveaway_id, await self.data.guild(guild).giveaways.get_raw(giveaway_id))
             
             await asyncio.sleep(60)
+        
+    async def _add_roles(self, guild, winners):
+        role = await self.data.guild(guild).giveawayRole()
+        log_channel = await self.data.guild(guild).logchannel()
+
+        if not role:
+            return
+
+        role = guild.get_role(int(role))
+        if log_channel:
+            log_channel = guild.get_channel(int(log_channel))
+
+        if not role:
+            return
+
+        winners = [guild.get_member(int(x)) for x in re.findall(r'<@!?([0-9]+)>', winners)]
+        for winner in winners:
+            try:
+                await winner.add_roles(role)
+                if log_channel:
+                    await log_channel.send(f"{winner.mention} was assigned with **{role.name}** role for winning a giveaway.")
+            except:
+                pass
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
