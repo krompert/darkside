@@ -16,4 +16,4 @@ class Pimp(commands.Cog):
         if user.bot:
             return await ctx.send("You can't pimp slap bots.")
 
-        return await ctx.send(embed=discord.Embed(description=f"{ctx.author.mention} Contracted its hand, and PIMP SLAPPED {user.mention}").set_image(url="https://i.imgur.com/A604pen.mp4"))
+        return await ctx.send(embed=discord.Embed(description=f"{ctx.author.mention} Contracted its hand, and PIMP SLAPPED {user.mention}").set_image(url="https://imgur.com/ioAuqRk"))
