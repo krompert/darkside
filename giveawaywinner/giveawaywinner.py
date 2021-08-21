@@ -33,8 +33,8 @@ class GiveawayWinner(commands.Cog):
             await self.data.guild(ctx.guild).giveaway_role.set(role.id)
             await ctx.send(f"Giveaway role has been set to **{role.name}**!")
 
-    @giveawaywinner.command(name="channel")
-    async def _channel(self, ctx, channel: discord.TextChannel=None):
+    @giveawaywinner.command(name="hostchannel")
+    async def _hostchannel(self, ctx, channel: discord.TextChannel=None):
         """Setup giveaway channel, where giveaways will be hosted."""
         if not channel:
             await self.data.guild(ctx.guild).giveaway_channel.set(None)
