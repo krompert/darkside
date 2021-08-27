@@ -44,12 +44,21 @@ class Giveaways(commands.Cog):
                                 winners = await self.winners_message(winners)
                                 await self.embed_msg(giveaway_id, giveaway, winners)
                                 await self._add_roles(guild, winners)
+                                await self.MessageWinners(guild, winners)
                                 await self.data.guild(guild).giveaways.set_raw(giveaway_id, "ended", value=True)
                             else:
                                 await self.embed_msg(giveaway_id, await self.data.guild(guild).giveaways.get_raw(giveaway_id))
             
             await asyncio.sleep(60)
-        
+    
+    async def MessageWinners(self, guild, winners):
+        winners = [guild.get_member(int(x)) for x in re.findall(r'<@!?([0-9]+)>', winners)]
+        for winner in winners:
+            try:
+                await winner.send(f"You have won a giveaway on {guild.name}")
+            except:
+                pass
+
     async def _add_roles(self, guild, winners):
         role = await self.data.guild(guild).giveawayRole()
         log_channel = await self.data.guild(guild).logchannel()
@@ -79,12 +88,19 @@ class Giveaways(commands.Cog):
         channel = await self.bot.fetch_channel(payload.channel_id)
         user = await guild.fetch_member(payload.user_id)
         message = await channel.fetch_message(payload.message_id)
-        
+        winnerRole = await self.data.guild(guild).giveawayRole()
+        if winnerRole:
+            winnerRole = guild.get_role(int(winnerRole))
+
         if user.bot:
             return
 
         data = await self.data.guild(guild).giveaways()
         if str(message.id) not in data:
+            return
+
+        if winnerRole in user.roles:
+            await message.remove_reaction(payload.emoji, user)
             return
 
         data = await self.data.guild(guild).giveaways.get_raw(str(message.id))
@@ -212,6 +228,7 @@ class Giveaways(commands.Cog):
             winner = await self.end_giveaway(messageID, data, winners)
             winners.append(winner.mention)
         winners = await self.winners_message(winners)
+        await self.MessageWinners(guild, winners)
         await self.embed_msg(messageID, data, winners)
         await self.data.guild(ctx.guild).giveaways.set_raw(messageID, "ended", value=True)
         await ctx.send(f"Ended the giveaway with the message id: `{messageID}`")
