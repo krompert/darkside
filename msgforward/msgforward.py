@@ -15,9 +15,22 @@ class MsgForward(commands.Cog):
         """Setup message forwarding."""
         pass
 
+    @ch.command(name="allchannels")
+    async def _allchannels(self, ctx, serverID: int):
+        """View a list of the text channels on the provided server."""
+        guild = self.bot.get_guild(serverID)
+        if not guild:
+            return await ctx.send("No server found with the similiar ID.")
+        msg = ""
+        for channel in guild.text_channels:
+            msg += f"{channel.name} - `{channel.id}`,     \n"
+        embed=discord.Embed(description=msg, title="Text Channels")
+        await ctx.send(embed=embed)
+        
+
     @ch.command(name="channel")
     async def _channel(self, ctx, channel: discord.TextChannel, targetChannelId: int):
-        """Set a channel where the jokes should be sent."""
+        """Link channel A with channel B."""
         targetChannelId = self.bot.get_channel(targetChannelId)
         if not targetChannelId:
             return await ctx.send("Invalid targetChannelId provided!")
@@ -202,12 +215,16 @@ class MsgForward(commands.Cog):
             if not channelObj:
                 continue
 
-            for linkedChannelId in data[channel]:
-                if active and data[channel][linkedChannelId]['toggle']:
-                    linkedChannel = self.bot.get_channel(int(linkedChannelId))
-                    if not linkedChannel:
-                        continue
-                    msg = f'{channelObj.mention} --> {linkedChannel.mention}'
+            for linkedChannelId in data[str(channel)]:
+                linkedChannel = self.bot.get_channel(int(linkedChannelId))
+                if not linkedChannel:
+                    continue
+
+                if active and data[str(channel)][str(linkedChannelId)]['toggle']:
+                    msg = f'{channelObj.mention} `{channelObj.id}` --> {linkedChannel.mention} `{linkedChannel.id}`'
+                    msgs.append(msg)
+                elif not active:
+                    msg = f'{channelObj.mention} `{channelObj.id}` --> {linkedChannel.mention} `{linkedChannel.id}`'
                     msgs.append(msg)
 
         return msgs
