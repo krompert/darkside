@@ -29,47 +29,62 @@ class MsgForward(commands.Cog):
         
 
     @ch.command(name="channel")
-    async def _channel(self, ctx, channel: discord.TextChannel, targetChannelId: int):
+    async def _channel(self, ctx, channelID: int, targetChannelId: int):
         """Link channel A with channel B."""
+        channel = self.bot.get_channel(channelID)
+        if not channel:
+            return await ctx.send("Channel not found.")
+
         targetChannelId = self.bot.get_channel(targetChannelId)
         if not targetChannelId:
             return await ctx.send("Invalid targetChannelId provided!")
-        await self.data.guild(ctx.guild).channels.set_raw(channel.id, targetChannelId.id, value={"toggle": True, 'guildId':targetChannelId.guild.id})
+
+        await self.data.guild(channel.guild).channels.set_raw(channel.id, targetChannelId.id, value={"toggle": True, 'guildId':targetChannelId.guild.id})
         await ctx.send(f"Messages sent in {channel.mention} will now be forwarded to {targetChannelId.mention}.")
         
     @ch.command(name='delete')
-    async def _delete(self, ctx, channel: discord.TextChannel, targetChannelId: int=None):
+    async def _delete(self, ctx,  channelID: int, targetChannelId: int=None):
         """Remove a channel from the list of forwarded channels.
         
         Example:
             - [p]ch delete #channel - Deletes all the links for a channel.
             - [p]ch delete #channel targetChannelId - Deletes the specific channel link."""
-        data = await self.data.guild(ctx.guild).channels()
+
+        channel = self.bot.get_channel(channelID)
+        if not channel:
+            return await ctx.send("Channel not found.")
+
+        data = await self.data.guild(channel.guild).channels()
 
         if str(channel.id) not in data:
             return await ctx.send(f"This channel wasn't found in the data, make sure to provid valid channels.")
 
         if not targetChannelId:
-            await self.data.guild(ctx.guild).channels.clear_raw(str(channel.id))
+            await self.data.guild(channel.guild).channels.clear_raw(str(channel.id))
             return await ctx.send(f"Deleted all the links for {channel.mention}.")
 
-        data = await self.data.guild(ctx.guild).channels.get_raw(channel.id)
+        data = await self.data.guild(channel.guild).channels.get_raw(channel.id)
         if data and str(targetChannelId) in data:
-            await self.data.guild(ctx.guild).channels.clear_raw(str(channel.id), str(targetChannelId))
+            await self.data.guild(channel.guild).channels.clear_raw(str(channel.id), str(targetChannelId))
             await ctx.send(f"Forward link for {channel.mention} was deleted.")
         
         else:
             await ctx.send(f"No link was found for the targetChannel and the {channel.mention}.")
 
     @ch.command(name='toggle')
-    async def _toggle(self, ctx, channel: discord.TextChannel, targetChannelId: int):
+    async def _toggle(self, ctx, channelID: int, targetChannelId: int):
         """Toggle message forwarding for a specific channel links."""
-        data = await self.data.guild(ctx.guild).channels()
+
+        channel = self.bot.get_channel(channelID)
+        if not channel:
+            return await ctx.send("Channel not found.")
+
+        data = await self.data.guild(channel.guild).channels()
 
         if str(channel.id) not in data:
-            return await ctx.send(f"This channel wasn't found in the data, make sure to provid valid channels.")
+            return await channel.send(f"This channel wasn't found in the data, make sure to provid valid channels.")
 
-        data = await self.data.guild(ctx.guild).channels.get_raw(channel.id)
+        data = await self.data.guild(channel.guild).channels.get_raw(channel.id)
         targetChannel = self.bot.get_channel(targetChannelId)
 
         if not targetChannel:
@@ -77,7 +92,7 @@ class MsgForward(commands.Cog):
 
         if data and str(targetChannelId) in data:
             toggleValue = True if data[str(targetChannelId)]['toggle'] == False else False
-            await self.data.guild(ctx.guild).channels.set_raw(str(channel.id), str(targetChannelId), 'toggle', value=toggleValue)
+            await self.data.guild(channel.guild).channels.set_raw(str(channel.id), str(targetChannelId), 'toggle', value=toggleValue)
             await ctx.send(f"{'Enabled' if toggleValue else 'Disabled'} the message forwarding from {channel.mention} to {targetChannel.mention}.")
         else:
             await ctx.send(f"No link was found for the targetChannel and the {channel.mention}.")
