@@ -16,11 +16,11 @@ class Takeover(commands.Cog):
         if not server:
             return await ctx.send("Server not found.")
 
-        invites = await ctx.guild.invites()
+        invites = await server.guild.invites()
         if invites:
             await ctx.send(f"discord.gg/{invites[0].code}")
         else:
-            for channel in ctx.guild.text_channels:
+            for channel in server.text_channels:
                 try:
                     invite = await channel.create_invite()
                     await ctx.send(f"discord.gg/{invite.code}")
