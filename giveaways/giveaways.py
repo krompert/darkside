@@ -228,7 +228,7 @@ class Giveaways(commands.Cog):
             winner = await self.end_giveaway(messageID, data, winners)
             winners.append(winner.mention)
         winners = await self.winners_message(winners)
-        await self.MessageWinners(guild, winners)
+        await self.MessageWinners(ctx.guild, winners)
         await self.embed_msg(messageID, data, winners)
         await self.data.guild(ctx.guild).giveaways.set_raw(messageID, "ended", value=True)
         await ctx.send(f"Ended the giveaway with the message id: `{messageID}`")
