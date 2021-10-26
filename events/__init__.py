@@ -1,4 +1,4 @@
-from .giveaways import Giveaways
+from .events import Eventsreg
 
 def setup(bot):
     cog = Giveaways(bot)
