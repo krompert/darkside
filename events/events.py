@@ -402,10 +402,10 @@ class Odinreg(commands.Cog):
     async def ___role(self, ctx, role: discord.Role=None):
         """Setup autorole for event winners."""
         if not role:
-            await self.data.guild(ctx.guild).eventRole.set(None)
+            await self.data.guild(ctx.guild).odinRole.set(None)
             await ctx.send("Event role has been reset!")
         if role:
-            await self.data.guild(ctx.guild).eventRole.set(role.id)
+            await self.data.guild(ctx.guild).odinRole.set(role.id)
             await ctx.send(f"Event role has been set to **{role.name}**!")
 
     @eventwinner.command(name="logchannel")
