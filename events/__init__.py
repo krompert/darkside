@@ -1,5 +1,5 @@
-from .events import Odinreg
+from .events import OdinEvent
 
 def setup(bot):
-    cog = Odinreg(bot)
+    cog = OdinEvent(bot)
     bot.add_cog(cog)
