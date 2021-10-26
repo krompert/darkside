@@ -31,9 +31,9 @@ class Odinreg(commands.Cog):
                     if not guild:
                         continue
                     
-                    data = await self.data.guild(guild).odin()
+                    data = await self.data.guild(guild).odinreg()
                     for odin_id in data:
-                        odin = await self.data.guild(guild).odin.get_raw(odin_id)
+                        odin = await self.data.guild(guild).odinreg.get_raw(odin_id)
                         if odin["ended"] == False:
                             if datetime.datetime.utcnow().timestamp() >= odin["ends_on"]:
                                 winners = []
@@ -45,9 +45,9 @@ class Odinreg(commands.Cog):
                                 await self.embed_msg(odin_id, odin, winners)
                                 await self._add_roles(guild, winners)
                                 await self.MessageWinners(guild, winners)
-                                await self.data.guild(guild).odin.set_raw(odin_id, "ended", value=True)
+                                await self.data.guild(guild).odinreg.set_raw(odin_id, "ended", value=True)
                             else:
-                                await self.embed_msg(odin_id, await self.data.guild(guild).odin.get_raw(odin_id))
+                                await self.embed_msg(odin_id, await self.data.guild(guild).odinreg.get_raw(odin_id))
             
             await asyncio.sleep(60)
     
@@ -198,7 +198,7 @@ class Odinreg(commands.Cog):
 
         data = await self.data.guild(ctx.guild).odinreg()
         
-        embed=discord.Embed(description=f"odin ends in: **{duration[1]}**\nWinners: **{response['winners']}**\nHosted By: {ctx.author.mention}\n\n**React with 🎟️ to enter!**", title=f"{response['prize'].upper()}")
+        embed=discord.Embed(description=f"Odin Registration ends in: **{duration[1]}**\nWinners: **{response['winners']}**\nHosted By: {ctx.author.mention}\n\n**React with 🎟️ to enter!**", title=f"{response['prize'].upper()}")
         embed.set_image(url="https://cdn.discordapp.com/attachments/710898402443001897/902635164952318012/odin-is-with-us-magnus-bruun.gif")
         if response["roles_required"]:
             embed.add_field(name="Roles Required", value=",".join(roles))
