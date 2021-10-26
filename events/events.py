@@ -88,9 +88,9 @@ class Odinreg(commands.Cog):
         channel = await self.bot.fetch_channel(payload.channel_id)
         user = await guild.fetch_member(payload.user_id)
         message = await channel.fetch_message(payload.message_id)
-        winnerRole = await self.data.guild(guild).giveawayRole()
-        if winnerRole:
-            winnerRole = guild.get_role(int(winnerRole))
+        odinRole = await self.data.guild(guild).giveawayRole()
+        if odinRole:
+            odinRole = guild.get_role(int(odinRole))
 
         if user.bot:
             return
@@ -99,7 +99,7 @@ class Odinreg(commands.Cog):
         if str(message.id) not in data:
             return
 
-        if winnerRole in user.roles:
+        if odinRole in user.roles:
             await message.remove_reaction(payload.emoji, user)
             return
 
