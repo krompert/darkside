@@ -196,10 +196,10 @@ class Odinreg(commands.Cog):
             "duration": response["duration"][1]
         })
 
-        data = await self.data.guild(ctx.guild).events()
+        data = await self.data.guild(ctx.guild).odinreg()
         
         embed=discord.Embed(description=f"event ends in: **{duration[1]}**\nWinners: **{response['winners']}**\nHosted By: {ctx.author.mention}\n\n**React with 🎟️ to enter!**", title=f"{response['prize'].upper()}")
-        embed.set_image(url="https://cdn.discordapp.com/attachments/878714215374921748/902624013627572314/odin-is-with-us-magnus-bruun.gif")
+        embed.set_image(url="https://cdn.discordapp.com/attachments/694962488352964720/818885190520406026/event.gif")
         if response["roles_required"]:
             embed.add_field(name="Roles Required", value=",".join(roles))
         message = await ctx.send(embed=embed)
@@ -356,7 +356,7 @@ class Odinreg(commands.Cog):
             content = f"🎟️ Congratulations {winners.replace('**Winner:**', '')}!" + f" You have been selected for **{data['prize'].upper()}** war!" if winners != "**Winner:** No one entered the event." else ""
         else:
             embed=discord.Embed(description=f"Event selection ends in: **{time_left[1]}**\nWinners: **{data['winners']}**\nHosted By: {host}\n\n**React with 🎟️ to enter!**", title=data['prize'].upper())
-            embed.set_image(url="https://cdn.discordapp.com/attachments/878714215374921748/902624013627572314/odin-is-with-us-magnus-bruun.gif")
+            embed.set_image(url="https://cdn.discordapp.com/attachments/694962488352964720/818885190520406026/event.gif")
             if roles:
                 embed.add_field(name="Roles Required", value=",".join(roles))
 
