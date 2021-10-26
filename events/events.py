@@ -203,7 +203,7 @@ class Odinreg(commands.Cog):
         if response["roles_required"]:
             embed.add_field(name="Roles Required", value=",".join(roles))
         message = await ctx.send(embed=embed)
-        await self.data.guild(ctx.guild).events.set_raw(message.id, value=response)
+        await self.data.guild(ctx.guild).odinreg.set_raw(message.id, value=response)
         await message.add_reaction("🎟️")
 
     async def delete_message(self, msg):
@@ -215,11 +215,11 @@ class Odinreg(commands.Cog):
     @event.command(name="end")
     async def _end(self, ctx, messageID: int):
         """End a event."""
-        data = await self.data.guild(ctx.guild).events()
+        data = await self.data.guild(ctx.guild).odinreg()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No event was found with the message id: `{messageID}`")
         
-        data = await self.data.guild(ctx.guild).events.get_raw(messageID)
+        data = await self.data.guild(ctx.guild).odinreg.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This event selection has ended. Please see results for selected participants.")
 
@@ -230,17 +230,17 @@ class Odinreg(commands.Cog):
         winners = await self.winners_message(winners)
         await self.MessageWinners(ctx.guild, winners)
         await self.embed_msg(messageID, data, winners)
-        await self.data.guild(ctx.guild).events.set_raw(messageID, "ended", value=True)
+        await self.data.guild(ctx.guild).odinreg.set_raw(messageID, "ended", value=True)
         await ctx.send(f"Ended the event with the message id: `{messageID}`")
 
     @event.command(name="reroll")
     async def _reroll(self, ctx, messageID: int):
         """Reroll a event."""
-        data = await self.data.guild(ctx.guild).events()
+        data = await self.data.guild(ctx.guild).odinreg()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No event was found with the message id: `{messageID}`")
         
-        data = await self.data.guild(ctx.guild).events.get_raw(messageID)
+        data = await self.data.guild(ctx.guild).odinreg.get_raw(messageID)
         if not data['ended']:
             return await ctx.send("This event selection hasn't ended yet.")
 
@@ -266,11 +266,11 @@ class Odinreg(commands.Cog):
     @_role.command(name="remove")
     async def _remove(self, ctx, messageID, role: discord.Role):
         """Remove a role from the event."""
-        data = await self.data.guild(ctx.guild).events()
+        data = await self.data.guild(ctx.guild).odinreg()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No event was found with the message id: `{messageID}`")
         
-        data = await self.data.guild(ctx.guild).events.get_raw(messageID)
+        data = await self.data.guild(ctx.guild).odinreg.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This event selection was ended.")
 
@@ -279,7 +279,7 @@ class Odinreg(commands.Cog):
             return await ctx.send("The role doesn't exist in the list.")
         
         roles.remove(role.id)
-        await self.data.guild(ctx.guild).events.set_raw(messageID, "roles_required", value=roles)
+        await self.data.guild(ctx.guild).odinreg.set_raw(messageID, "roles_required", value=roles)
         roles = [ctx.guild.get_role(role).mention for role in roles if ctx.guild.get_role(role)]
         await self.embed_msg(messageID, data, None, roles)
         await ctx.send(f'Removed the {role.name} from the list')
@@ -288,11 +288,11 @@ class Odinreg(commands.Cog):
     async def _add(self, ctx, messageID, role:discord.Role):
         """Add a role for the event."""
 
-        data = await self.data.guild(ctx.guild).events()
+        data = await self.data.guild(ctx.guild).odinreg()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No event was found with the message id: `{messageID}`")
         
-        data = await self.data.guild(ctx.guild).events.get_raw(messageID)
+        data = await self.data.guild(ctx.guild).odinreg.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This event selection was ended.")
 
@@ -301,7 +301,7 @@ class Odinreg(commands.Cog):
             return await ctx.send("This already exists in the list.")
         
         roles.append(role.id)
-        await self.data.guild(ctx.guild).events.set_raw(messageID, "roles_required", value=roles)
+        await self.data.guild(ctx.guild).odinreg.set_raw(messageID, "roles_required", value=roles)
         roles = [ctx.guild.get_role(role).mention for role in roles if ctx.guild.get_role(role)]
         await self.embed_msg(messageID, data, None, roles)
         await ctx.send(f"Users with {role.name} will now be allowed to enter the event.")
@@ -309,11 +309,11 @@ class Odinreg(commands.Cog):
     @_role.command(name="list")
     async def _list(self, ctx, messageID):
         """List all the allowed roles for a event."""
-        data = await self.data.guild(ctx.guild).events()
+        data = await self.data.guild(ctx.guild).odinreg()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No event was found with the message id: `{messageID}`")
         
-        data = await self.data.guild(ctx.guild).events.get_raw(messageID)
+        data = await self.data.guild(ctx.guild).odinreg.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This event was ended.")
 
@@ -331,19 +331,19 @@ class Odinreg(commands.Cog):
     @_winners.command(name="set")
     async def _set(self, ctx, messageID: int, winners: int):
         """ Set the amount of winners for a event."""
-        data = await self.data.guild(ctx.guild).events()
+        data = await self.data.guild(ctx.guild).odinreg()
         if not data or str(messageID) not in data:
             return await ctx.send(f"No event was found with the message id: `{messageID}`")
         
-        data = await self.data.guild(ctx.guild).events.get_raw(messageID)
+        data = await self.data.guild(ctx.guild).odinreg.get_raw(messageID)
         if data['ended']:
             return await ctx.send("This event was ended.")
 
         if data['winners'] == winners:
             return await ctx.send("Previous winner count is the same as the new one.")
 
-        await self.data.guild(ctx.guild).events.set_raw(messageID, "winners", value=winners)
-        await self.embed_msg(messageID, await self.data.guild(ctx.guild).events.get_raw(messageID))
+        await self.data.guild(ctx.guild).odinreg.set_raw(messageID, "winners", value=winners)
+        await self.embed_msg(messageID, await self.data.guild(ctx.guild).odinreg.get_raw(messageID))
         await ctx.send(f"Changed the event total winners to : **{winners}**.")
 
     async def embed_msg(self, messageID, data, winners=None, roles=None):
