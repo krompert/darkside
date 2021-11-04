@@ -198,7 +198,7 @@ class Events(commands.Cog):
 
         data = await self.data.guild(ctx.guild).giveaways()
         
-        embed=discord.Embed(description=f"Event Registration ends in: **{duration[1]}**\nWinners: **{response['winners']}**\nHosted By: {ctx.author.mention}\n\n**React with 🗡️ to enter!**", title=f"{response['prize'].upper()}")
+        embed=discord.Embed(description=f"Event Registration ends in: **{duration[1]}**\nWinners: **{response['winners']}**\nHosted By: {ctx.author.mention}\n\n**React with 🗡️ to enter, Registration does not guarantee an spot, and it will taken to consideration depending on server match!**", title=f"{response['prize'].upper()}")
         embed.set_image(url="https://cdn.discordapp.com/attachments/710898402443001897/905849266881310740/odin-is-with-us-magnus-bruun.gif")
         if response["roles_required"]:
             embed.add_field(name="Roles Required", value=",".join(roles))
@@ -357,7 +357,7 @@ class Events(commands.Cog):
             embed=discord.Embed(description=f"{winners}\n**Host:** {host}", title=data['prize'].upper(), timestamp=datetime.datetime.utcnow()).set_footer(text="Ended at")
             content = f"🗡️ Congratulations {winners.replace('**Winner:**', '')}!" + f" You are now a participant of **{data['prize'].upper()}** event!" if winners != "**Winner:** No one registered for the event." else ""
         else:
-            embed=discord.Embed(description=f"Event registration ends in: **{time_left[1]}**\nWinners: **{data['winners']}**\nHosted By: {host}\n\n**React with 🗡️ to register!**", title=data['prize'].upper())
+            embed=discord.Embed(description=f"Event registration ends in: **{time_left[1]}**\nWinners: **{data['winners']}**\nHosted By: {host}\n\n**React with 🗡️ to register, Registration does not guarantee an spot, and it will taken to consideration depending on server match!**", title=data['prize'].upper())
             embed.set_image(url="https://cdn.discordapp.com/attachments/710898402443001897/905849266881310740/odin-is-with-us-magnus-bruun.gif")
             if roles:
                 embed.add_field(name="Roles Required", value=",".join(roles))
