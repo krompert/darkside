@@ -80,6 +80,11 @@ class TimedRoles(commands.Cog):
             time_text = "days"
             if raw_time == 1:
                 time_text = time_text[:-1]
+        if result[1] in ["w", "week"]:
+            time = raw_time * 60 * 60 * 24 * 7
+            time_text = "weeks"
+            if raw_time == 1:
+                time_text = time_text[:-1]
         return time, time_text
 
 
