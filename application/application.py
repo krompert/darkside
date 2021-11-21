@@ -129,12 +129,12 @@ class Application(commands.Cog):
         embed.title = (
             f"User: {ctx.author.name}#{ctx.author.discriminator} ({ctx.author.id})"
         )
-        embed.add_field(name="Name:", value=name.content, inline=True)
-        embed.add_field(name="Age:", value=age.content, inline=True)
+        embed.add_field(name="Current Server:", value=name.content, inline=True)
+        embed.add_field(name="VIP Level:", value=age.content, inline=True)
         embed.add_field(name="Timezone:", value=timezone.content, inline=True)
-        embed.add_field(name="Desired position:", value=position.content, inline=True)
-        embed.add_field(name="Active days/week:", value=days.content, inline=True)
-        embed.add_field(name="Active hours/day:", value=hours.content, inline=True)
+        embed.add_field(name="Heroes Level:", value=position.content, inline=True)
+        embed.add_field(name="Game Branch/Progress", value=days.content, inline=True)
+        embed.add_field(name="Components Level:", value=hours.content, inline=True)
         embed.add_field(
             name="Previous experience:", value=experience.content, inline=False
         )
