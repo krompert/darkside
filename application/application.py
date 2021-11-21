@@ -138,7 +138,7 @@ class Application(commands.Cog):
         embed.add_field(
             name="Components Level:", value=comps.content, inline=False
         )
-        embed.add_field(name="Extra Comments:", value=reason.content, inline=False)
+        embed.add_field(name="Extra Comments:", value=comments.content, inline=False)
 
         await channel.send(embed=embed)
 
