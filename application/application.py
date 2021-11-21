@@ -50,7 +50,7 @@ class Application(commands.Cog):
         except TypeError:
             channel = None
         if not channel:
-            channel = get(ctx.guild.text_channels, name = "transfers")
+            channel = get(ctx.guild.text_channels, name = "transfer")
             if not channel:
                 return await ctx.send("Uh oh, the configuration is not correct. Ask the Admins to set it.")
         if ctx.guild not in self.antispam:
@@ -109,18 +109,14 @@ class Application(commands.Cog):
             hours = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
-        await ctx.author.send(
-            "Alliance desired to join if transfer is approved?."
-        )
+        await ctx.author.send("Alliance desired to join if transfer is approved?.")
         try:
             experience = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
         await ctx.author.send("What level are your current components? Further review may take place with Server Leaders.")
-        try:
-            reason = await self.bot.wait_for("message", timeout=120, check=check)
-        except asyncio.TimeoutError:
-            return await ctx.send("You took too long. Try again, please.")
+      
+	  
         embed = discord.Embed(color=await ctx.embed_colour(), timestamp=datetime.now())
         embed.set_author(name="New application!", icon_url=ctx.author.avatar_url)
         embed.set_footer(
@@ -135,7 +131,6 @@ class Application(commands.Cog):
         embed.add_field(name="Heroes Level:", value=position.content, inline=True)
         embed.add_field(name="Game Branch/Progress", value=days.content, inline=True)
         embed.add_field(name="Components Level:", value=hours.content, inline=True)
- 
 
         await channel.send(embed=embed)
 
