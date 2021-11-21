@@ -158,8 +158,8 @@ class Application(commands.Cog):
         pred = MessagePredicate.yes_or_no(ctx)
         role = MessagePredicate.valid_role(ctx)
 
-        applicant = get(ctx.guild.roles, name="Staff Applicant")
-        channel = get(ctx.guild.text_channels, name="applications")
+        applicant = get(ctx.guild.roles, name="Server Aspirant")
+        channel = get(ctx.guild.text_channels, name="transfer")
 
         await ctx.send(
             "This will create required channel and role. Do you wish to continue? (yes/no)"
@@ -181,7 +181,7 @@ class Application(commands.Cog):
                 )
         if not channel:
             await ctx.send(
-                "Do you want everyone to see the applications channel? (yes/no)"
+                "Do you want everyone to see the transfer channel? (yes/no)"
             )
             try:
                 await self.bot.wait_for("message", timeout=30, check=pred)
@@ -203,7 +203,7 @@ class Application(commands.Cog):
                 }
             try:
                 channel = await ctx.guild.create_text_channel(
-                    "applications",
+                    "transfers",
                     overwrites=overwrites,
                     reason="Transfers cog setup",
                 )
