@@ -17,8 +17,8 @@ class Application(commands.Cog):
     **Use `[p]applysetup` first.**
     """
 
-    __author__ = "saurichable"
-    __version__ = "1.1.3"
+    __author__ = "Darkside"
+    __version__ = "1.2.8"
 
     def __init__(self, bot: Red):
         self.bot = bot
@@ -36,13 +36,13 @@ class Application(commands.Cog):
     @commands.guild_only()
     @checks.bot_has_permissions(manage_roles=True)
     async def apply(self, ctx: commands.Context):
-        """Apply to be a staff member."""
+        """Apply to transfer into Server."""
         try:
             role_add = get(ctx.guild.roles, id = await self.config.guild(ctx.guild).applicant_id())
         except TypeError:
             role_add = None
         if not role_add:
-            role_add = get(ctx.guild.roles, name = "Staff Applicant")
+            role_add = get(ctx.guild.roles, name = "Server Aspirant")
             if not role_add:
                 return await ctx.send("Uh oh, the configuration is not correct. Ask the Admins to set it.")
         try:
@@ -50,7 +50,7 @@ class Application(commands.Cog):
         except TypeError:
             channel = None
         if not channel:
-            channel = get(ctx.guild.text_channels, name = "applications")
+            channel = get(ctx.guild.text_channels, name = "transfers")
             if not channel:
                 return await ctx.send("Uh oh, the configuration is not correct. Ask the Admins to set it.")
         if ctx.guild not in self.antispam:
@@ -69,7 +69,7 @@ class Application(commands.Cog):
             )
         try:
             await ctx.author.send(
-                "Let's start right away! You have maximum of 2 minutes for each question.\nWhat position are you applying for?"
+                "Let's start right away! You have maximum of 2 minutes for each question.\nWhat is your current server?"
             )
         except discord.Forbidden:
             return await ctx.send(
@@ -84,12 +84,12 @@ class Application(commands.Cog):
             position = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
-        await ctx.author.send("What is your name?")
+        await ctx.author.send("What is your current VIP level?")
         try:
             name = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
-        await ctx.author.send("How old are you?")
+        await ctx.author.send("Why have you chosen our server?")
         try:
             age = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
@@ -99,24 +99,24 @@ class Application(commands.Cog):
             timezone = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
-        await ctx.author.send("How many days per week can you be active?")
+        await ctx.author.send("How Many 5 Star heroes do you currently have?")
         try:
             days = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
-        await ctx.author.send("How many hours per day can you be active?")
+        await ctx.author.send("What branch are you, Combat or Mech? And how advance?")
         try:
             hours = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
         await ctx.author.send(
-            "Social Medias and how many followers?, please describe."
+            "Alliance desired to join if transfer is approved?."
         )
         try:
             experience = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
-        await ctx.author.send("Why do you want to be a member of our staff? Further review may take place with Admins.")
+        await ctx.author.send("What level are your current components? Further review may take place with Server Leaders.")
         try:
             reason = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
@@ -145,7 +145,7 @@ class Application(commands.Cog):
         await ctx.author.add_roles(role_add)
 
         await ctx.author.send(
-            "Your application has been sent to the Admins, thank you!"
+            "Your application has been sent to the Server Leaders, Someone will be with you shortly. Thank you!"
         )
         self.antispam[ctx.guild][ctx.author].stamp()
 
@@ -173,7 +173,7 @@ class Application(commands.Cog):
         if not applicant:
             try:
                 applicant = await ctx.guild.create_role(
-                    name="Staff Applicant", reason="Application cog setup"
+                    name="Server Aspirant", reason="Transfer cog setup"
                 )
             except discord.Forbidden:
                 return await ctx.send(
@@ -205,7 +205,7 @@ class Application(commands.Cog):
                 channel = await ctx.guild.create_text_channel(
                     "applications",
                     overwrites=overwrites,
-                    reason="Application cog setup",
+                    reason="Transfers cog setup",
                 )
             except discord.Forbidden:
                 return await ctx.send(
@@ -246,7 +246,7 @@ class Application(commands.Cog):
         except TypeError:
             applicant = None
         if not applicant:
-            applicant = get(ctx.guild.roles, name="Staff Applicant")
+            applicant = get(ctx.guild.roles, name="Server Aspirant")
             if not applicant:
                 return await ctx.send("Uh oh, the configuration is not correct. Ask the Admins to set it.")
         role = MessagePredicate.valid_role(ctx)
@@ -275,7 +275,7 @@ class Application(commands.Cog):
     @commands.guild_only()
     @checks.bot_has_permissions(manage_roles=True)
     async def deny(self, ctx: commands.Context, target: discord.Member):
-        """Deny a staff applicant.
+        """Deny a server aspirant.
 
         <target> can be a mention or an ID"""
         try:
@@ -293,7 +293,7 @@ class Application(commands.Cog):
         except TypeError:
             applicant = None
         if not applicant:
-            applicant = get(ctx.guild.roles, name="Staff Applicant")
+            applicant = get(ctx.guild.roles, name="Server Aspirant")
             if not applicant:
                 return await ctx.send("Uh oh, the configuration is not correct. Ask the Admins to set it.")
         if applicant in target.roles:
