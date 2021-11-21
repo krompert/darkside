@@ -18,7 +18,7 @@ class Application(commands.Cog):
     """
 
     __author__ = "Darkside"
-    __version__ = "1.2.8"
+    __version__ = "1.2.5"
 
     def __init__(self, bot: Red):
         self.bot = bot
@@ -36,7 +36,7 @@ class Application(commands.Cog):
     @commands.guild_only()
     @checks.bot_has_permissions(manage_roles=True)
     async def apply(self, ctx: commands.Context):
-        """Apply to transfer into Server."""
+        """Apply for server transfer."""
         try:
             role_add = get(ctx.guild.roles, id = await self.config.guild(ctx.guild).applicant_id())
         except TypeError:
@@ -50,15 +50,15 @@ class Application(commands.Cog):
         except TypeError:
             channel = None
         if not channel:
-            channel = get(ctx.guild.text_channels, name = "transfer")
+            channel = get(ctx.guild.text_channels, name = "transfers")
             if not channel:
                 return await ctx.send("Uh oh, the configuration is not correct. Ask the Admins to set it.")
         if ctx.guild not in self.antispam:
             self.antispam[ctx.guild] = {}
         if ctx.author not in self.antispam[ctx.guild]:
-            self.antispam[ctx.guild][ctx.author] = AntiSpam([(timedelta(days=2), 1)])
+            self.antispam[ctx.guild][ctx.author] = AntiSpam([(timedelta(days=7), 1)])
         if self.antispam[ctx.guild][ctx.author].spammy:
-            return await ctx.send("Uh oh, you're doing this way too frequently.")
+            return await ctx.send("Uh oh, you're doing this way too frequently. Please be patient, Transfer applications can take up to 7 days.")
         if not role_add:
             return await ctx.send(
                 "Uh oh. Looks like your Admins haven't added the required role."
@@ -81,17 +81,17 @@ class Application(commands.Cog):
             return m.author == ctx.author and m.channel == ctx.author.dm_channel
 
         try:
-            position = await self.bot.wait_for("message", timeout=120, check=check)
+            server = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
         await ctx.author.send("What is your current VIP level?")
         try:
-            name = await self.bot.wait_for("message", timeout=120, check=check)
+            vip = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
         await ctx.author.send("Why have you chosen our server?")
         try:
-            age = await self.bot.wait_for("message", timeout=120, check=check)
+            why = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
         await ctx.author.send("What timezone are you in? (Google is your friend.)")
@@ -101,22 +101,26 @@ class Application(commands.Cog):
             return await ctx.send("You took too long. Try again, please.")
         await ctx.author.send("How Many 5 Star heroes do you currently have?")
         try:
-            days = await self.bot.wait_for("message", timeout=120, check=check)
+            heroes = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
         await ctx.author.send("What branch are you, Combat or Mech? And how advance?")
         try:
-            hours = await self.bot.wait_for("message", timeout=120, check=check)
+            branch = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
-        await ctx.author.send("Alliance desired to join if transfer is approved?.")
+        await ctx.author.send(
+            "What level are your current components?"
+        )
         try:
-            experience = await self.bot.wait_for("message", timeout=120, check=check)
+            comps = await self.bot.wait_for("message", timeout=120, check=check)
         except asyncio.TimeoutError:
             return await ctx.send("You took too long. Try again, please.")
-        await ctx.author.send("What level are your current components? Further review may take place with Server Leaders.")
-      
-	  
+        await ctx.author.send("Please add any comments that would help leaders reviwing your application. Further review may take place with Server Leaders.")
+        try:
+            comments = await self.bot.wait_for("message", timeout=120, check=check)
+        except asyncio.TimeoutError:
+            return await ctx.send("You took too long. Try again, please.")
         embed = discord.Embed(color=await ctx.embed_colour(), timestamp=datetime.now())
         embed.set_author(name="New application!", icon_url=ctx.author.avatar_url)
         embed.set_footer(
@@ -125,19 +129,23 @@ class Application(commands.Cog):
         embed.title = (
             f"User: {ctx.author.name}#{ctx.author.discriminator} ({ctx.author.id})"
         )
-        embed.add_field(name="Current Server:", value=name.content, inline=True)
-        embed.add_field(name="VIP Level:", value=age.content, inline=True)
+        embed.add_field(name="VIP Level:", value=vip.content, inline=True)
+        embed.add_field(name="Why Our Server:", value=why.content, inline=True)
         embed.add_field(name="Timezone:", value=timezone.content, inline=True)
-        embed.add_field(name="Heroes Level:", value=position.content, inline=True)
-        embed.add_field(name="Game Branch/Progress", value=days.content, inline=True)
-        embed.add_field(name="Components Level:", value=hours.content, inline=True)
+        embed.add_field(name="Current Server:", value=server.content, inline=True)
+        embed.add_field(name="Hero's 5 Stars:", value=heroes.content, inline=True)
+        embed.add_field(name="Branch/Level:", value=branch.content, inline=True)
+        embed.add_field(
+            name="Components Level:", value=comps.content, inline=False
+        )
+        embed.add_field(name="Extra Comments:", value=reason.content, inline=False)
 
         await channel.send(embed=embed)
 
         await ctx.author.add_roles(role_add)
 
         await ctx.author.send(
-            "Your application has been sent to the Server Leaders, Someone will be with you shortly. Thank you!"
+            "Your application has been sent to the server leaders, Please be patient, applications could take up to 7 days. Thank you!"
         )
         self.antispam[ctx.guild][ctx.author].stamp()
 
@@ -151,7 +159,7 @@ class Application(commands.Cog):
         role = MessagePredicate.valid_role(ctx)
 
         applicant = get(ctx.guild.roles, name="Server Aspirant")
-        channel = get(ctx.guild.text_channels, name="transfer")
+        channel = get(ctx.guild.text_channels, name="transfers")
 
         await ctx.send(
             "This will create required channel and role. Do you wish to continue? (yes/no)"
@@ -165,7 +173,7 @@ class Application(commands.Cog):
         if not applicant:
             try:
                 applicant = await ctx.guild.create_role(
-                    name="Server Aspirant", reason="Transfer cog setup"
+                    name="Server Aspirant", reason="Application cog setup"
                 )
             except discord.Forbidden:
                 return await ctx.send(
@@ -173,7 +181,7 @@ class Application(commands.Cog):
                 )
         if not channel:
             await ctx.send(
-                "Do you want everyone to see the transfer channel? (yes/no)"
+                "Do you want everyone to see the transfers channel? (yes/no)"
             )
             try:
                 await self.bot.wait_for("message", timeout=30, check=pred)
@@ -203,7 +211,7 @@ class Application(commands.Cog):
                 return await ctx.send(
                     "Uh oh. Looks like I don't have permissions to manage channels."
                 )
-        await ctx.send(f"What role can accept or reject applicants?")
+        await ctx.send(f"What role can accept or reject tranfers?")
         try:
             await self.bot.wait_for("message", timeout=30, check=role)
         except asyncio.TimeoutError:
@@ -220,7 +228,7 @@ class Application(commands.Cog):
     @commands.guild_only()
     @checks.bot_has_permissions(manage_roles=True)
     async def accept(self, ctx: commands.Context, target: discord.Member):
-        """Accept a staff applicant.
+        """Accept a server transfer aspirant.
 
         <target> can be a mention or an ID."""
         try:
@@ -267,7 +275,7 @@ class Application(commands.Cog):
     @commands.guild_only()
     @checks.bot_has_permissions(manage_roles=True)
     async def deny(self, ctx: commands.Context, target: discord.Member):
-        """Deny a server aspirant.
+        """Deny a server transfer aspirant.
 
         <target> can be a mention or an ID"""
         try:
@@ -308,14 +316,14 @@ class Application(commands.Cog):
                 except asyncio.TimeoutError:
                     return await ctx.send("You took too long. Try again, please.")
                 await target.send(
-                    f"Your application in {ctx.guild.name} has been denied.\n*Reason:* {reason.content}"
+                    f"Your transfer in {ctx.guild.name} has been denied.\n*Reason:* {reason.content}"
                 )
             else:
                 await target.send(
-                    f"Your application in {ctx.guild.name} has been denied."
+                    f"Your transfer in {ctx.guild.name} has been denied."
                 )
             await target.remove_roles(applicant)
-            await ctx.send(f"Denied {target.mention}'s application.")
+            await ctx.send(f"Denied {target.mention}'s transfer.")
         else:
             await ctx.send(
                 f"Uh oh. Looks like {target.mention} hasn't applied for anything."
