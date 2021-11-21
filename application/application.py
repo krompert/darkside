@@ -135,10 +135,7 @@ class Application(commands.Cog):
         embed.add_field(name="Heroes Level:", value=position.content, inline=True)
         embed.add_field(name="Game Branch/Progress", value=days.content, inline=True)
         embed.add_field(name="Components Level:", value=hours.content, inline=True)
-        embed.add_field(
-            name="Previous experience:", value=experience.content, inline=False
-        )
-        embed.add_field(name="Reason:", value=reason.content, inline=False)
+ 
 
         await channel.send(embed=embed)
 
