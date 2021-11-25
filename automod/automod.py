@@ -659,7 +659,7 @@ class AutoMod(commands.Cog):
                 if word:
                     if word.lower() not in [".donate","donate,.agree"]:
                         try:
-                            await message.author.send("You can only type **donate** to get a lobby or **.agree** to  gain server access. Please read rules")
+                            await message.author.send("You can only type **.agree** to  gain server access. Please read rules")
                         except:
                             pass
                         try:
