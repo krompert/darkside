@@ -199,7 +199,7 @@ class Giveaways(commands.Cog):
         data = await self.data.guild(ctx.guild).giveaways()
         
         embed=discord.Embed(description=f"Giveaway ends in: **{duration[1]}**\nWinners: **{response['winners']}**\nHosted By: {ctx.author.mention}\n\n**React with 🎟️ to enter!**", title=f"{response['prize'].upper()}")
-        embed.set_image(url="https://cdn.discordapp.com/attachments/710898402443001897/905204953285545984/thanksgiving-gifs.gif")
+        embed.set_image(url="https://cdn.discordapp.com/attachments/710898402443001897/915428517292961832/christmas-50.gif")
         if response["roles_required"]:
             embed.add_field(name="Roles Required", value=",".join(roles))
         message = await ctx.send(embed=embed)
@@ -358,7 +358,7 @@ class Giveaways(commands.Cog):
             content = f"🎟️ Congratulations {winners.replace('**Winner:**', '')}!" + f" You have won the **{data['prize'].upper()}** giveaway!" if winners != "**Winner:** No one entered the giveaway." else ""
         else:
             embed=discord.Embed(description=f"Giveaway ends in: **{time_left[1]}**\nWinners: **{data['winners']}**\nHosted By: {host}\n\n**React with 🎟️ to enter!**", title=data['prize'].upper())
-            embed.set_image(url="https://cdn.discordapp.com/attachments/710898402443001897/905204953285545984/thanksgiving-gifs.gif")
+            embed.set_image(url="https://cdn.discordapp.com/attachments/710898402443001897/915428517292961832/christmas-50.gif")
             if roles:
                 embed.add_field(name="Roles Required", value=",".join(roles))
 
