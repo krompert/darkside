@@ -251,6 +251,7 @@ class TicketSystem(commands.Cog):
                                 await self.call_ticket_close(channel, archivechannel, ticket['userID'], user)
                                 if POLLCHANNEL:
                                     pollmessage = await POLLCHANNEL.fetch_message(ticket['pollMessageID'])
+                                    TICKetChannel = guild.get_channel(ticket['channelID']) if ticket['channelID'] else None
                                     if pollmessage:
                                         reaction1 = [x for x in pollmessage.reactions if x.emoji == "✅"][0]
                                         reaction1members = [x for x in await reaction1.users().flatten() if x != self.bot.user]
@@ -258,7 +259,7 @@ class TicketSystem(commands.Cog):
                                         reaction2 = [x for x in pollmessage.reactions if x.emoji == "❌"][0]
                                         reaction2members = [x for x in await reaction2.users().flatten() if x != self.bot.user]
 
-                                        await pollmessage.edit(content=f"The poll has ended.\n{len(reaction1members)} voted for ✅.\n{len(reaction2members)} voted for ❌.", embed=None)
+                                        await pollmessage.edit(content=f"The {TICKetChannel.name} poll has ended.\n{len(reaction1members)} voted for ✅.\n{len(reaction2members)} voted for ❌.", embed=None)
                                         await pollmessage.clear_reactions()
 
                                 ticketsdata.remove(ticket)
@@ -270,13 +271,16 @@ class TicketSystem(commands.Cog):
                     if ticket['pollMessageID'] == message.id:
                         if user.bot:
                             return
+                        
+                        TICKetChannel = guild.get_channel(ticket['channelID']) if ticket['channelID'] else None
+                        
                         reaction1 = [x for x in message.reactions if x.emoji == "✅"][0]
                         reaction1members = [x for x in await reaction1.users().flatten() if x != self.bot.user]
 
                         reaction2 = [x for x in message.reactions if x.emoji == "❌"][0]
                         reaction2members = [x for x in await reaction2.users().flatten() if x != self.bot.user]
 
-                        await message.edit(content=f"The poll has ended.\n{len(reaction1members)} voted for ✅.\n{len(reaction2members)} voted for ❌.", embed=None)
+                        await message.edit(content=f"The {TICKetChannel.name} poll has ended.\n{len(reaction1members)} voted for ✅.\n{len(reaction2members)} voted for ❌.", embed=None)
                         await message.clear_reactions()
                             
                                 
