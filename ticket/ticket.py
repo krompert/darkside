@@ -299,7 +299,7 @@ class TicketSystem(commands.Cog):
     async def call_ticket_close(self, channel, logchannel, user, staff):
         """Function to close a ticket."""
         userOBJ = channel.guild.get_member(user)
-        filepath = "var/www/html"
+        filepath = "var/www/html/"
         transcript = await chat_exporter.export(channel, channel.guild)
         fileNAME = filepath + f"{channel.name}.html"
         fileNAME2 = filepath + '/' + f"{channel.name}.html"
