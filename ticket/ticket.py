@@ -309,19 +309,20 @@ class TicketSystem(commands.Cog):
         """Function to close a ticket."""
         userOBJ = channel.guild.get_member(user)
         transcript = await chat_exporter.export(channel, channel.guild)
+        filepath = "var/www/html/"
         fileNAME = "/" + f"{channel.name}.html"
         if transcript is not None:
             outfile = open(fileNAME, "w", encoding="utf-8")
             outfile.write(transcript)
             outfile.close()
 
-        embed = discord.Embed(description=f"Ticket User - {userOBJ.mention if userOBJ else user}\nTicket Number - transcript-{channel.name}\nClosed By: {staff.mention}\nTicket Transcript -  http://tickets.darkh4cks.wtf/{fileNAME}", timestamp=datetime.utcnow())
+        embed = discord.Embed(description=f"Ticket User - {userOBJ.mention if userOBJ else user}\nTicket Number - transcript-{channel.name}\nClosed By: {staff.mention}\nTicket Transcript -  http://tickets.darkh4cks.wtf{fileNAME}", timestamp=datetime.utcnow())
         embed.set_footer(text="Ticket closed at")
         await logchannel.send(embed=embed)
         await channel.delete(reason="Ticket Closed")
         member = channel.guild.get_member(user)
         if member:
-            await member.send("Your ticket has been closed by the staff member.")
+            await member.send("Your ticket has been closed by a staff member.")
         
     async def create_poll(self, guild, data, user):
         """Creates a poll for the staff."""
