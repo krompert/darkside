@@ -223,13 +223,11 @@ class TicketSystem(commands.Cog):
             
         if data['messageID'] and data['messageID'] == message.id:
 
-        
         if not user.bot:
-            await message.remove_reaction(payload.emoji, user)        
-            
-            
-        if not Validity:
-            return await user.send(f"You can only create maximum {data['perUser']} tickets.")
+                await message.remove_reaction(payload.emoji, user)
+
+            if not Validity:
+                return await user.send(f"You can only create maximum {data['perUser']} tickets.")
 
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
