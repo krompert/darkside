@@ -315,7 +315,7 @@ class TicketSystem(commands.Cog):
             outfile.write(transcript)
             outfile.close()
 
-        embed = discord.Embed(description=f"Ticket User - {userOBJ.mention if userOBJ else user}\nTicket Number - transcript-{channel.name}\nClosed By: {staff.mention}\nTicket Transcript -  http://tickets.darkh4cks.wtf{fileNAME}", timestamp=datetime.utcnow())
+        embed = discord.Embed(description=f"Ticket User - {userOBJ.mention if userOBJ else user}\nTicket Number - transcript-{channel.name}\nClosed By: {staff.mention}\nTicket Transcript -  http://tickets.darkh4cks.wtf/{fileNAME}", timestamp=datetime.utcnow())
         embed.set_footer(text="Ticket closed at")
         await logchannel.send(embed=embed)
         await channel.delete(reason="Ticket Closed")
