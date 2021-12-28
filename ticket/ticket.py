@@ -196,7 +196,6 @@ class TicketSystem(commands.Cog):
         ticketsdata = await self.data.guild(guild).openTickets()
         
         Validity = await self.checking_validity(user, data['perUser'], ticketsdata)
-        await message.remove_reaction(payload.emoji, user)
 
         POLLCHANNEL = data['pollChannel']
         if POLLCHANNEL:
@@ -224,8 +223,13 @@ class TicketSystem(commands.Cog):
             
         if data['messageID'] and data['messageID'] == message.id:
 
-            if not Validity:
-                return await user.send(f"You can only create maximum {data['perUser']} tickets.")
+        
+        if not user.bot:
+            await message.remove_reaction(payload.emoji, user)        
+            
+            
+        if not Validity:
+            return await user.send(f"You can only create maximum {data['perUser']} tickets.")
 
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
