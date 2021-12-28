@@ -39,7 +39,9 @@ class TicketSystem(commands.Cog):
     @_ticket.command()
     async def message(self, ctx, channel: discord.TextChannel, image: str, *, message: str):
         """Set a message which users react to iniate the ticket."""
-
+        if len(message) > 2000:
+            return await ctx.send("The messageg is too long.")
+            
         embed=discord.Embed(description= message, title='Ticket System')
         embed.set_image(url=image)
         embed.set_footer(text="React to the message to start a ticket.")
@@ -52,6 +54,9 @@ class TicketSystem(commands.Cog):
     @_ticket.command()
     async def ticketmessage(self, ctx, image: str, *, message: str):
         """Set a message that is sent everytime a ticket is created."""
+        if len(message) > 2000:
+            return await ctx.send("The messageg is too long.")
+
         await self.data.guild(ctx.guild).ticket.set_raw("newticketmessage", "image", value=image)
         await self.data.guild(ctx.guild).ticket.set_raw("newticketmessage", "message", value=message)
 
@@ -220,6 +225,10 @@ class TicketSystem(commands.Cog):
                 user: discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True, embed_links=True, read_message_history=True)
             }
 
+            
+            for role in staffroles:
+                overwrites[role] = discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True, embed_links=True, read_message_history=True)
+
             randomnumber = ''.join(["{}".format(randint(1, 9)) for num in range(0, 5)])
 
             ticketChannel = await guild.create_text_channel(name=f"{user.name}-{randomnumber}", category=ticketCatg, overwrites=overwrites)
@@ -248,10 +257,10 @@ class TicketSystem(commands.Cog):
                     elif staffroles:
                         for role in staffroles:
                             if role in user.roles:
+                                TICKetChannel = guild.get_channel(ticket['channelID']) if ticket['channelID'] else None
                                 await self.call_ticket_close(channel, archivechannel, ticket['userID'], user)
                                 if POLLCHANNEL:
                                     pollmessage = await POLLCHANNEL.fetch_message(ticket['pollMessageID'])
-                                    TICKetChannel = guild.get_channel(ticket['channelID']) if ticket['channelID'] else None
                                     if pollmessage:
                                         reaction1 = [x for x in pollmessage.reactions if x.emoji == "✅"][0]
                                         reaction1members = [x for x in await reaction1.users().flatten() if x != self.bot.user]
@@ -264,7 +273,6 @@ class TicketSystem(commands.Cog):
 
                                 ticketsdata.remove(ticket)
                                 return await self.data.guild(guild).openTickets.set(ticketsdata)
-
         elif str(payload.emoji) == '🔒':
             if channel.id == data['pollChannel']:
                 for ticket in ticketsdata:
@@ -299,16 +307,14 @@ class TicketSystem(commands.Cog):
     async def call_ticket_close(self, channel, logchannel, user, staff):
         """Function to close a ticket."""
         userOBJ = channel.guild.get_member(user)
-        filepath = "/var/www/html"
         transcript = await chat_exporter.export(channel, channel.guild)
-        fileNAME = filepath + f"{channel.name}.html"
-        fileNAME2 = filepath + '/' + f"{channel.name}.html"
+        fileNAME = "/" + f"{channel.name}.html"
         if transcript is not None:
             outfile = open(fileNAME, "w", encoding="utf-8")
             outfile.write(transcript)
             outfile.close()
 
-        embed = discord.Embed(description=f"Ticket User - {userOBJ.mention if userOBJ else user}\nTicket Number - transcript-{channel.name}\nClosed By: {staff.mention}\nTicket Transcript - http://tickets.darkh4cks.wtf/{fileNAME2}", timestamp=datetime.utcnow())
+        embed = discord.Embed(description=f"Ticket User - {userOBJ.mention if userOBJ else user}\nTicket Number - transcript-{channel.name}\nClosed By: {staff.mention}\nTicket Transcript -  http://tickets.darkh4cks.wtf{fileNAME}", timestamp=datetime.utcnow())
         embed.set_footer(text="Ticket closed at")
         await logchannel.send(embed=embed)
         await channel.delete(reason="Ticket Closed")
