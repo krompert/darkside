@@ -129,7 +129,8 @@ class TicketSystem(commands.Cog):
     @_ticket.command()
     async def settings(self, ctx):
         """View all the ticket settings."""
-    await self.data.guild(ctx.guild).openTickets.clear()
+        data = await self.data.guild(ctx.guild).ticket()
+        await self.data.guild(ctx.guild).openTickets.clear()
         ticketCategory = data['ticketCategory']
         if ticketCategory:
             ticketCategory = ctx.guild.get_channel(ticketCategory)
@@ -314,7 +315,7 @@ class TicketSystem(commands.Cog):
             outfile.write(transcript)
             outfile.close()
 
-        embed = discord.Embed(description=f"Ticket User - {userOBJ.mention if userOBJ else user}\nTicket Number - transcript-{channel.name}\nClosed By: {staff.mention}\nTicket Transcript -  http://tickets.darkh4cks.wtf/{fileNAME}", timestamp=datetime.utcnow())
+        embed = discord.Embed(description=f"Ticket User - {userOBJ.mention if userOBJ else user}\nTicket Number - transcript-{channel.name}\nClosed By: {staff.mention}\nTicket Transcript -  http://tickets.darkh4cks.wtf{fileNAME}", timestamp=datetime.utcnow())
         embed.set_footer(text="Ticket closed at")
         await logchannel.send(embed=embed)
         await channel.delete(reason="Ticket Closed")
