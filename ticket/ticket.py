@@ -196,6 +196,7 @@ class TicketSystem(commands.Cog):
         ticketsdata = await self.data.guild(guild).openTickets()
         
         Validity = await self.checking_validity(user, data['perUser'], ticketsdata)
+        await message.remove_reaction(payload.emoji, user)
 
         POLLCHANNEL = data['pollChannel']
         if POLLCHANNEL:
