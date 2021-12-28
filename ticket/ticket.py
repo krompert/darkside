@@ -308,6 +308,7 @@ class TicketSystem(commands.Cog):
         """Function to close a ticket."""
         userOBJ = channel.guild.get_member(user)
         transcript = await chat_exporter.export(channel, channel.guild)
+        filepath = "/var/www/html"
         fileNAME = "/" + f"{channel.name}.html"
         if transcript is not None:
             outfile = open(fileNAME, "w", encoding="utf-8")
