@@ -129,7 +129,7 @@ class TicketSystem(commands.Cog):
     @_ticket.command()
     async def settings(self, ctx):
         """View all the ticket settings."""
-        data = await self.data.guild(ctx.guild).ticket()
+    await self.data.guild(ctx.guild).openTickets.clear()
         ticketCategory = data['ticketCategory']
         if ticketCategory:
             ticketCategory = ctx.guild.get_channel(ticketCategory)
