@@ -309,7 +309,8 @@ class TicketSystem(commands.Cog):
         userOBJ = channel.guild.get_member(user)
         transcript = await chat_exporter.export(channel, channel.guild)
         filepath = "/var/www/html"
-        fileNAME = "/" + f"{channel.name}.html"
+        fileNAME = "closed-" + f"{channel.name}.html"
+        fileNAME2 = '/' + f"{channel.name}.html"
         if transcript is not None:
             outfile = open(fileNAME, "w", encoding="utf-8")
             outfile.write(transcript)
@@ -321,7 +322,7 @@ class TicketSystem(commands.Cog):
         await channel.delete(reason="Ticket Closed")
         member = channel.guild.get_member(user)
         if member:
-            await member.send("Your ticket has been closed by the staff member.")
+            await member.send("Your ticket has been closed by a staff member.")
         
     async def create_poll(self, guild, data, user):
         """Creates a poll for the staff."""
