@@ -183,7 +183,7 @@ class TicketSystem(commands.Cog):
         message = await channel.fetch_message(payload.message_id)
         data = await self.data.guild(guild).ticket()
         ticketsdata = await self.data.guild(guild).openTickets()
-
+        
         Validity = await self.checking_validity(user, data['perUser'], ticketsdata)
 
         POLLCHANNEL = data['pollChannel']
@@ -208,7 +208,7 @@ class TicketSystem(commands.Cog):
             archivechannel = guild.get_channel(archivechannel)
 
         if not ticketCatg:
-            return await user.send("Ticket system is not setup currently, please reach out to an admin.")
+            return
             
         if data['messageID'] and data['messageID'] == message.id:
 
@@ -299,10 +299,10 @@ class TicketSystem(commands.Cog):
     async def call_ticket_close(self, channel, logchannel, user, staff):
         """Function to close a ticket."""
         userOBJ = channel.guild.get_member(user)
-        filepath = "var/www/html/"
+        filepath = "/var/www/html"
         transcript = await chat_exporter.export(channel, channel.guild)
         fileNAME = filepath + f"{channel.name}.html"
-        fileNAME2 = '/' + f"{channel.name}.html"
+        fileNAME2 = filepath + '/' + f"{channel.name}.html"
         if transcript is not None:
             outfile = open(fileNAME, "w", encoding="utf-8")
             outfile.write(transcript)
