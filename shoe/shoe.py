@@ -16,4 +16,4 @@ class Shoe(commands.Cog):
         if user.bot:
             return await ctx.send("You can't throw shoe at bots.")
 
-        return await ctx.send(embed=discord.Embed(description=f"{ctx.author.mention} aims and throws a shoe at {user.mention}").set_image(url="https://i.imgur.com/VX05KJ3.gif"))
+        return await ctx.send(embed=discord.Embed(description=f"{ctx.author.mention} aims and throws a shoe at {user.mention}").set_image(url="https://c.tenor.com/RfoJhw57qd8AAAAC/angry-mad.gif"))
